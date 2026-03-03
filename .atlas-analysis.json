@@ -1,0 +1,127 @@
+{
+  "projectType": "saas",
+  "projectName": "Better Hub",
+  "projectDescription": "A reimagined code collaboration platform for humans and AI agents, built on top of GitHub",
+  "theme": "palm",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/repository-overview",
+              "features/pull-requests",
+              "features/issues",
+              "features/ghost-ai",
+              "features/command-center",
+              "features/ci-cd",
+              "features/security-advisories",
+              "features/keyboard-shortcuts"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment-variables",
+              "configuration/authentication",
+              "configuration/database",
+              "configuration/redis",
+              "configuration/ai-models"
+            ]
+          },
+          {
+            "group": "Browser Extension",
+            "pages": [
+              "extension/overview",
+              "extension/chrome",
+              "extension/firefox"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/setup",
+              "development/contributing",
+              "development/architecture"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "GitHub Integration",
+            "pages": [
+              "api/repos",
+              "api/pull-requests",
+              "api/issues",
+              "api/search"
+            ]
+          },
+          {
+            "group": "AI & Ghost",
+            "pages": [
+              "api/ai-chat",
+              "api/code-analysis"
+            ]
+          },
+          {
+            "group": "User & Settings",
+            "pages": [
+              "api/user-profile",
+              "api/user-settings",
+              "api/billing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Enhanced repository overview with README, file tree, and activity feed",
+    "AI-powered PR reviews with inline diffs and summaries",
+    "Intelligent issue management and triage",
+    "Ghost AI assistant for code navigation and review",
+    "Command center (⌘K) for quick navigation",
+    "CI/CD status visualization across branches",
+    "Security advisory tracking",
+    "Keyboard-first interface",
+    "Browser extensions for Chrome and Firefox"
+  ],
+  "publicApiSurface": [
+    "/api/ai - AI chat and Ghost assistant endpoints",
+    "/api/auth - Authentication endpoints",
+    "/api/billing - Stripe billing and subscription management",
+    "/api/repo-files - Repository file operations",
+    "/api/search-repos - Repository search",
+    "/api/search-prs - Pull request search",
+    "/api/search-issues - Issue search",
+    "/api/search-code - Code search",
+    "/api/user-profile - User profile management",
+    "/api/user-settings - User settings management",
+    "/api/workflow-runs - CI/CD workflow data",
+    "/api/merge-conflicts - Merge conflict resolution",
+    "/api/highlight-code - Syntax highlighting service"
+  ]
+}
