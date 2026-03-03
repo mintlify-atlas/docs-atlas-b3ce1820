@@ -1,0 +1,165 @@
+---
+title: Chrome Extension
+description: Install and configure the Better Hub extension for Chrome
+---
+
+The Chrome extension works with Chrome, Edge, Brave, and other Chromium-based browsers.
+
+## Installation
+
+<Tabs>
+  <Tab title="Chrome Web Store">
+    <Steps>
+      <Step title="Visit the Chrome Web Store">
+        Navigate to the Better Hub extension page on the Chrome Web Store.
+        
+        <Note>
+          If the extension isn't published yet, use the manual installation method.
+        </Note>
+      </Step>
+      
+      <Step title="Add to Chrome">
+        Click **Add to Chrome**, then **Add extension** in the confirmation dialog.
+      </Step>
+      
+      <Step title="Pin the extension (optional)">
+        Click the puzzle piece icon in your toolbar and pin Better Hub for easy access to the settings popup.
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Manual Installation">
+    <Steps>
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/better-auth/better-hub.git
+        cd better-hub
+        ```
+      </Step>
+      
+      <Step title="Build the extension">
+        ```bash
+        cd packages/chrome-extension
+        # No build step required — extension files are ready to use
+        ```
+      </Step>
+      
+      <Step title="Load in Chrome">
+        1. Open `chrome://extensions/` in your browser
+        2. Enable **Developer mode** (toggle in top-right)
+        3. Click **Load unpacked**
+        4. Select the `packages/chrome-extension` folder
+      </Step>
+      
+      <Step title="Verify installation">
+        The Better Hub icon should appear in your extensions toolbar. If not, click the puzzle piece icon and pin it.
+      </Step>
+    </Steps>
+    
+    <Note>
+      Manual installations won't auto-update. Check the repository for updates or switch to the Web Store version when available.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Configuration
+
+<Steps>
+  <Step title="Open the extension popup">
+    Click the Better Hub icon in your browser toolbar.
+  </Step>
+  
+  <Step title="Set your instance URL">
+    Enter your Better Hub instance URL in the **Instance URL** field.
+    
+    - Default: `https://better-hub.com`
+    - Self-hosted: Use your deployment URL (e.g., `https://hub.yourcompany.com`)
+    
+    Click **Save** after entering the URL.
+  </Step>
+  
+  <Step title="Enable redirects">
+    The toggle switch at the top controls whether redirects are active:
+    
+    - **Green (on)**: GitHub URLs redirect to Better Hub
+    - **Gray (off)**: Extension is paused, no redirects happen
+    
+    The status indicator shows "Redirecting" or "Paused".
+  </Step>
+</Steps>
+
+<Note>
+  Changes take effect immediately — no reload required. Just navigate to any GitHub URL to test.
+</Note>
+
+## Usage
+
+Once configured, the extension works automatically:
+
+1. **Visit any GitHub URL** — from links in emails, Slack, documentation, etc.
+2. **Automatic redirect** — You'll be taken to the equivalent page in Better Hub
+3. **Seamless navigation** — All internal GitHub links redirect as you browse
+
+### Temporarily Disable
+
+To use GitHub directly without uninstalling:
+
+- Click the extension icon and toggle the switch off
+- The icon turns gray to indicate redirects are paused
+- Toggle back on when you want to resume using Better Hub
+
+### View Route Mappings
+
+Click "Route mappings" in the popup to see exactly how GitHub URLs map to Better Hub routes.
+
+## Permissions Explained
+
+The Chrome extension requires these permissions:
+
+| Permission | Purpose |
+|------------|----------|
+| `storage` | Store your instance URL and enabled/disabled state |
+| `declarativeNetRequest` | Redirect GitHub URLs to Better Hub |
+| `activeTab` | Check if current tab is on GitHub (for popup UI) |
+| `webNavigation` | Handle edge cases like github.com homepage redirect |
+| `host: github.com` | Required to intercept GitHub URLs |
+
+<Note>
+  The extension only runs on `github.com` and does not access any other websites. It does not read page content or send data externally.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Redirects aren't working">
+    - Check that the toggle is **on** (green) in the popup
+    - Verify your instance URL is correct and doesn't have a trailing slash
+    - Try disabling and re-enabling the extension
+    - Check that you're visiting a supported GitHub URL (not settings/marketplace/etc.)
+  </Accordion>
+  
+  <Accordion title="Extension icon is gray">
+    The gray icon means redirects are currently **disabled**. Click the icon and toggle redirects back on.
+  </Accordion>
+  
+  <Accordion title="Can't save instance URL">
+    - Make sure the URL starts with `http://` or `https://`
+    - Remove any trailing slashes from the URL
+    - Try reloading the extension from `chrome://extensions/`
+  </Accordion>
+  
+  <Accordion title="Logout from GitHub doesn't work">
+    This is a known edge case. The extension detects the GitHub logout flow and temporarily disables redirects to let the logout complete successfully.
+  </Accordion>
+</AccordionGroup>
+
+## Uninstall
+
+To remove the extension:
+
+1. Go to `chrome://extensions/`
+2. Find Better Hub in the list
+3. Click **Remove**
+4. Confirm removal
+
+Your settings (instance URL, enabled state) are deleted when you uninstall.

@@ -1,0 +1,183 @@
+---
+title: Firefox Extension
+description: Install and configure the Better Hub extension for Firefox
+---
+
+The Firefox extension works with Firefox and Firefox-based browsers. It requires Firefox 109 or later.
+
+## Installation
+
+<Tabs>
+  <Tab title="Firefox Add-ons">
+    <Steps>
+      <Step title="Visit Firefox Add-ons">
+        Navigate to the Better Hub extension page on the Firefox Add-ons site.
+        
+        <Note>
+          If the extension isn't published yet, use the manual installation method.
+        </Note>
+      </Step>
+      
+      <Step title="Add to Firefox">
+        Click **Add to Firefox**, then **Add** in the permission confirmation dialog.
+      </Step>
+      
+      <Step title="Pin the extension (optional)">
+        Right-click the Better Hub icon and select **Pin to Toolbar** for easy access to settings.
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Manual Installation">
+    <Steps>
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/better-auth/better-hub.git
+        cd better-hub
+        ```
+      </Step>
+      
+      <Step title="Navigate to extension folder">
+        ```bash
+        cd packages/firefox-extension
+        # No build step required — extension files are ready to use
+        ```
+      </Step>
+      
+      <Step title="Load in Firefox">
+        1. Open `about:debugging#/runtime/this-firefox` in your browser
+        2. Click **Load Temporary Add-on**
+        3. Select the `manifest.json` file from `packages/firefox-extension`
+      </Step>
+      
+      <Step title="Verify installation">
+        The Better Hub icon should appear in your toolbar. The extension will remain loaded until you restart Firefox.
+      </Step>
+    </Steps>
+    
+    <Warning>
+      Temporary add-ons are removed when Firefox restarts. For permanent installation, you'll need to package and sign the extension, or wait for it to be published on Firefox Add-ons.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Configuration
+
+<Steps>
+  <Step title="Open the extension popup">
+    Click the Better Hub icon in your browser toolbar.
+  </Step>
+  
+  <Step title="Set your instance URL">
+    Enter your Better Hub instance URL in the **Instance URL** field.
+    
+    - Default: `https://better-hub.com`
+    - Self-hosted: Use your deployment URL (e.g., `https://hub.yourcompany.com`)
+    
+    Click **Save** or press **Enter** after entering the URL.
+  </Step>
+  
+  <Step title="Enable redirects">
+    The toggle switch at the top controls whether redirects are active:
+    
+    - **Green (on)**: GitHub URLs redirect to Better Hub
+    - **Gray (off)**: Extension is paused, no redirects happen
+    
+    The status indicator shows "Redirecting" or "Paused".
+  </Step>
+</Steps>
+
+<Note>
+  Changes take effect immediately. Navigate to any GitHub URL to test the redirects.
+</Note>
+
+## Usage
+
+Once configured, the extension works automatically:
+
+1. **Visit any GitHub URL** — from links in emails, Slack, documentation, etc.
+2. **Automatic redirect** — You'll be taken to the equivalent page in Better Hub
+3. **Seamless navigation** — All internal GitHub links redirect as you browse
+
+### Temporarily Disable
+
+To use GitHub directly without uninstalling:
+
+- Click the extension icon and toggle the switch off
+- The icon turns gray to indicate redirects are paused
+- Toggle back on when you want to resume using Better Hub
+
+### View Route Mappings
+
+Expand "Route mappings" in the popup to see exactly how GitHub URLs map to Better Hub routes.
+
+## Permissions Explained
+
+The Firefox extension requires these permissions:
+
+| Permission | Purpose |
+|------------|----------|
+| `storage` | Store your instance URL and enabled/disabled state |
+| `declarativeNetRequestWithHostAccess` | Redirect GitHub URLs to Better Hub (Firefox-specific API) |
+| `activeTab` | Check if current tab is on GitHub (for popup UI) |
+| `host: github.com` | Required to intercept GitHub URLs |
+
+<Note>
+  The extension only runs on `github.com` and does not access any other websites. It does not read page content or send data externally.
+</Note>
+
+## Firefox-Specific Details
+
+### Manifest Differences
+
+The Firefox version uses Manifest V3 with Firefox-specific adaptations:
+
+- Uses `declarativeNetRequestWithHostAccess` instead of separate permissions
+- Background scripts instead of service workers
+- Includes `browser_specific_settings` for add-on ID and minimum version
+- Requires Firefox 109+ for full Manifest V3 support
+
+### Extension ID
+
+The extension uses the ID `better-hub@extension` for Firefox's add-on system.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Redirects aren't working">
+    - Check that the toggle is **on** (green) in the popup
+    - Verify your instance URL is correct and doesn't have a trailing slash
+    - Try disabling and re-enabling the extension from `about:addons`
+    - Ensure you're visiting a supported GitHub URL (not settings/marketplace/etc.)
+    - Check that you're running Firefox 109 or later
+  </Accordion>
+  
+  <Accordion title="Extension icon is gray">
+    The gray icon means redirects are currently **disabled**. Click the icon and toggle redirects back on.
+  </Accordion>
+  
+  <Accordion title="Can't save instance URL">
+    - Make sure the URL starts with `http://` or `https://`
+    - Remove any trailing slashes from the URL
+    - Try reloading the extension from `about:addons`
+  </Accordion>
+  
+  <Accordion title="Temporary add-on disappeared after restart">
+    This is expected behavior. Temporary add-ons must be reloaded after each browser restart. Install the signed version from Firefox Add-ons for permanent installation.
+  </Accordion>
+  
+  <Accordion title="Firefox version too old">
+    The extension requires Firefox 109 or later for Manifest V3 support. Update Firefox to the latest version.
+  </Accordion>
+</AccordionGroup>
+
+## Uninstall
+
+To remove the extension:
+
+1. Go to `about:addons`
+2. Find Better Hub in the Extensions list
+3. Click the three-dot menu (⋯) and select **Remove**
+4. Confirm removal
+
+Your settings (instance URL, enabled state) are deleted when you uninstall.

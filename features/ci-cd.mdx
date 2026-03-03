@@ -1,0 +1,396 @@
+---
+title: CI/CD Status
+description: Workflow runs and continuous integration status visualization
+icon: play-circle
+---
+
+## Overview
+
+Better Hub provides comprehensive visibility into GitHub Actions workflows and CI/CD pipelines. Track builds, tests, deployments, and checks across branches with powerful filtering and comparison tools.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Workflow Runs" icon="list">
+    View all workflow executions with status, duration, and actor
+  </Card>
+  <Card title="Status Filtering" icon="filter">
+    Filter by success, failure, in progress, cancelled, or skipped
+  </Card>
+  <Card title="Branch Comparison" icon="git-branch">
+    Compare workflow performance across different branches
+  </Card>
+  <Card title="Live Updates" icon="refresh-cw">
+    In-progress runs update in real-time with live duration counters
+  </Card>
+</CardGroup>
+
+## Actions List View
+
+The main Actions page shows all workflow runs for your repository:
+
+### Layout
+
+```
+[Search] [Filters] [Compare Branches]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CI · Run #1234
+   main · @username · 2 minutes ago
+   Duration: 1m 32s
+   
+⏳ Deploy · Run #1233  
+   feat/new-feature · @username · 5 minutes ago
+   Duration: Running for 3m 12s
+   
+❌ Tests · Run #1232
+   main · @username · 1 hour ago  
+   Duration: 45s · Failed
+```
+
+### Status Icons
+
+| Icon | Status | Description |
+|------|--------|-------------|
+| ✅ | Success | All jobs completed successfully |
+| ❌ | Failure | One or more jobs failed |
+| ⏳ | In Progress | Workflow is currently running |
+| 🚫 | Cancelled | Workflow was manually cancelled |
+| ⊘ | Skipped | Workflow was skipped (conditional) |
+| ⏸️ | Queued | Waiting for runner availability |
+
+## Filtering Workflow Runs
+
+Use the **Filters** dropdown to narrow down results:
+
+<Tabs>
+  <Tab title="Status">
+    Filter by workflow outcome:
+    - **All statuses**: Show everything
+    - **Success**: Only successful runs  
+    - **Failure**: Only failed runs
+    - **In progress**: Currently running
+    - **Cancelled**: Manually stopped
+    - **Skipped**: Conditionally skipped
+    
+    <Tip>
+    Use "Failure" filter to quickly identify broken builds and flaky tests.
+    </Tip>
+  </Tab>
+  <Tab title="Workflow">
+    Filter by workflow name:
+    - Searchable dropdown
+    - Shows all workflows from `.github/workflows/`
+    - Select multiple (combined with OR logic)
+    
+    Example workflows:
+    - CI
+    - Deploy  
+    - Tests
+    - Lint
+  </Tab>
+  <Tab title="Branch">
+    Filter by branch name:
+    - Searchable dropdown
+    - Shows branches with recent runs
+    - Useful for feature branch tracking
+    
+    Common branches:
+    - `main` / `master`
+    - `develop`  
+    - `feat/*`
+    - `fix/*`
+  </Tab>
+  <Tab title="Actor">
+    Filter by who triggered the run:
+    - Shows users who've triggered workflows
+    - Includes bot accounts (dependabot, etc.)
+    - Searchable by username
+  </Tab>
+  <Tab title="Event">
+    Filter by trigger type:
+    - `push`: Commits pushed
+    - `pull_request`: PR opened/updated
+    - `schedule`: Cron-triggered  
+    - `workflow_dispatch`: Manual trigger
+    - `release`: Release published
+  </Tab>
+</Tabs>
+
+### Active Filters
+
+When filters are applied:
+- **Badge count** appears on the Filters button (e.g., "Filters (3)")
+- **Active chips** display below the toolbar
+- **Clear individual** filters by clicking the chip's X
+- **Clear all** filters with the "Clear" button
+
+## Workflow Run Details
+
+Click any run to see full details:
+
+### Overview Tab
+
+- **Run metadata**: Workflow name, run number, branch, commit
+- **Trigger info**: Event type and actor
+- **Timestamps**: Queued, started, completed
+- **Duration**: Total execution time
+- **Artifacts**: Downloadable build outputs
+
+### Jobs Tab
+
+View all jobs in the workflow:
+
+```
+📋 Build
+   ✅ Completed in 1m 23s
+   
+📋 Test  
+   ❌ Failed in 45s
+   └─ Exit code 1
+   
+📋 Deploy
+   🚫 Skipped (test failed)
+```
+
+### Logs Tab
+
+View job logs with:
+- **Expandable steps**: Click to show/hide step output
+- **Search**: Find text in logs
+- **Download**: Save logs locally  
+- **Timestamps**: Optional timestamp column
+- **ANSI colors**: Preserves terminal colors
+
+<Note>
+Logs are syntax-highlighted and linkified. Click file paths to navigate to the code.
+</Note>
+
+## Live Progress Tracking
+
+In-progress runs update in real-time:
+
+### Live Duration
+
+The duration counter updates every second:
+```
+⏳ Running for 2m 34s
+⏳ Running for 2m 35s  
+⏳ Running for 2m 36s
+```
+
+### Status Changes
+
+When a job completes:
+1. Status icon changes (⏳ → ✅ or ❌)
+2. Final duration appears
+3. List automatically re-sorts if sorted by status
+
+<Tip>
+Leave the Actions page open while waiting for builds. You'll see results instantly without refreshing.
+</Tip>
+
+## Branch Comparison
+
+Compare workflow performance across branches:
+
+### Opening Comparison View
+
+1. Click **"Compare Branches"** in the toolbar
+2. Select **Base branch** (e.g., `main`)
+3. Select **Compare branch** (e.g., `feat/new-feature`)  
+4. Choose **Workflow** to compare
+5. View side-by-side results
+
+### Comparison Metrics
+
+<CardGroup cols={2}>
+  <Card title="Success Rate">
+    Percentage of successful runs in the last 30 days
+  </Card>
+  <Card title="Average Duration">
+    Mean execution time for the workflow
+  </Card>
+  <Card title="Recent Runs">
+    Last 10 executions with status indicators
+  </Card>
+  <Card title="Failure Analysis">
+    Most common failure reasons and steps
+  </Card>
+</CardGroup>
+
+### Use Cases
+
+- **Pre-merge check**: Compare feature branch CI against main before merging
+- **Performance regression**: Identify if your changes slowed down the build  
+- **Flakiness detection**: See if failure rate increased on your branch
+- **Deployment comparison**: Verify deploy workflow works on staging
+
+## PR Check Status
+
+On pull request pages, Better Hub displays check status prominently:
+
+### Check Status Badge
+
+At the top of the PR:
+```
+✅ All checks passed (5/5)
+```
+
+or
+
+```  
+❌ Some checks failed (3/5)
+```
+
+### Expandable Checks Panel
+
+Click the badge to see details:
+
+```
+✅ CI / Build (main)  
+✅ CI / Test (main)
+✅ CI / Lint (main)  
+❌ Deploy / Staging (main) - View logs
+⏳ Security / CodeQL (main) - In progress
+```
+
+Click any check to:
+- View logs
+- Re-run the check (if you have permissions)  
+- Navigate to the Actions page
+
+### Required Checks
+
+Required status checks are marked:
+```
+✅ CI / Build (main) · Required
+```
+
+The PR cannot be merged until required checks pass.
+
+## Workflow Status on Overview
+
+The repository overview shows CI/CD health:
+
+### Status Summary
+
+In the right panel:
+```
+CI/CD Status
+━━━━━━━━━━━
+✅ main · CI · 2m ago
+❌ develop · Tests · 1h ago  
+⏳ feat/new · Deploy · Running
+```
+
+Click any row to jump to the workflow run.
+
+## Filtering by Date Range
+
+Narrow results to a specific time period:
+
+1. Open the date picker (calendar icon)
+2. Select:
+   - **Last 24 hours**
+   - **Last 7 days**  
+   - **Last 30 days**
+   - **Custom range**
+3. List updates to show only runs in that window
+
+<Tip>
+Use date filtering to analyze CI stability over time. Compare failure rates week-over-week.
+</Tip>
+
+## Re-running Workflows
+
+If you have write access:
+
+1. Open a failed or cancelled workflow run
+2. Click **"Re-run jobs"** in the top-right
+3. Choose:
+   - **Re-run failed jobs**: Only retry failures  
+   - **Re-run all jobs**: Start from scratch
+4. Workflow queues immediately
+
+<Note>
+Re-running a workflow uses the same commit SHA, so code changes won't be picked up. Push a new commit to trigger a fresh run.
+</Note>
+
+## Artifacts & Logs
+
+### Downloading Artifacts
+
+If the workflow produces artifacts (build outputs, test reports):
+
+1. Open the workflow run
+2. Scroll to **"Artifacts"** section  
+3. Click the artifact name to download
+
+Common artifacts:
+- Build binaries (`.zip`, `.tar.gz`)
+- Coverage reports (`coverage.xml`)  
+- Test results (`test-results.xml`)
+- Screenshots (for visual tests)
+
+### Viewing Logs
+
+Logs are displayed with:
+- **Collapsible steps**: Expand only the steps you care about
+- **Search**: `Ctrl+F` to find text  
+- **Download**: Save full logs as `.txt`
+- **Permalinks**: Share links to specific log lines
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `⌘K` → "Actions" | Navigate to Actions page |
+| `F5` | Refresh workflow list |
+| `↓` / `↑` | Navigate between runs |
+| `Enter` | Open selected run |
+
+## Best Practices
+
+<Tip>
+**Monitor main branch**: Pin the Actions page or enable notifications for main branch failures. Fix breaking changes immediately.
+</Tip>
+
+<Tip>
+**Use comparison**: Before merging, compare your branch's CI against main to catch performance regressions.
+</Tip>
+
+<Tip>
+**Tag flaky tests**: If you see intermittent failures, add a label or comment. Track flakiness over time.
+</Tip>
+
+<Tip>
+**Artifacts for debugging**: Upload logs, screenshots, or core dumps as artifacts. Review them when tests fail in CI but pass locally.
+</Tip>
+
+## Troubleshooting
+
+<Accordion title="Workflow runs not showing up">
+Check that:
+1. The repository has a `.github/workflows/` directory
+2. Workflows have been triggered at least once
+3. You have access to view Actions (repo permissions)
+</Accordion>
+
+<Accordion title="Live updates not working">
+Ensure:
+1. Your browser allows WebSocket connections
+2. You're not on an extremely slow network
+3. The page has been open for less than 1 hour (reconnect by refreshing)
+</Accordion>
+
+<Accordion title="Can't re-run workflows">
+Re-running requires write access to the repository. If you're a collaborator with read-only access, ask a maintainer to re-run.
+</Accordion>
+
+## Related Features
+
+- [Pull Requests](/features/pull-requests) - View PR check status
+- [Repository Overview](/features/repository-overview) - CI/CD summary on overview
+- [Security Advisories](/features/security-advisories) - CodeQL scans shown in checks
+- [Command Center](/features/command-center) - Navigate to Actions with ⌘K

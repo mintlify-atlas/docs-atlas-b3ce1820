@@ -1,0 +1,227 @@
+---
+title: 'API Overview'
+description: 'Introduction to the Better Hub API'
+---
+
+## Introduction
+
+The Better Hub API provides programmatic access to GitHub data with enhanced features like AI-powered chat, semantic search, and workflow management. The API is built on Next.js App Router and uses session-based authentication.
+
+## Base URL
+
+```
+https://www.better-hub.com/api
+```
+
+For local development:
+```
+http://localhost:3000/api
+```
+
+## Response Format
+
+All API responses are returned in JSON format. Successful responses return the requested data directly, while errors follow this structure:
+
+<ResponseField name="error" type="string">
+  Human-readable error message
+</ResponseField>
+
+<ResponseField name="details" type="object" optional>
+  Additional error details (for validation errors)
+</ResponseField>
+
+### Example Success Response
+
+<CodeGroup>
+```json User Profile
+{
+  "login": "octocat",
+  "name": "The Octocat",
+  "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+  "bio": "GitHub mascot",
+  "public_repos": 8,
+  "followers": 1000,
+  "following": 0
+}
+```
+
+```json Search Results
+{
+  "total_count": 42,
+  "incomplete_results": false,
+  "items": [
+    {
+      "full_name": "octocat/Hello-World",
+      "description": "My first repository",
+      "stargazers_count": 80
+    }
+  ]
+}
+```
+</CodeGroup>
+
+### Example Error Response
+
+<CodeGroup>
+```json 401 Unauthorized
+{
+  "error": "Unauthorized"
+}
+```
+
+```json 400 Validation Error
+{
+  "error": "Invalid input",
+  "details": {
+    "displayName": ["String must contain at most 100 characters"]
+  }
+}
+```
+</CodeGroup>
+
+## Rate Limiting
+
+Better Hub implements rate limiting on sensitive endpoints:
+
+- **PAT Sign-in**: 5 requests per minute per IP
+- **AI endpoints**: Subject to credit limits and usage tracking
+- **GitHub API**: Inherits GitHub's rate limits based on your authentication
+
+Rate limit information is not currently exposed in response headers, but failed requests will return a `429 Too Many Requests` status.
+
+<Note>
+  API rate limits are separate from GitHub's rate limits. GitHub API calls made through Better Hub use your GitHub OAuth token and count against your GitHub rate limit.
+</Note>
+
+## API Categories
+
+The Better Hub API is organized into the following categories:
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Session-based auth with GitHub OAuth and Personal Access Tokens
+  </Card>
+  
+  <Card title="User Management" icon="user">
+    User profiles, settings, and preferences
+    - `GET /api/user-profile`
+    - `GET /api/user-settings`
+    - `PATCH /api/user-settings`
+    - `GET /api/user-scopes`
+  </Card>
+  
+  <Card title="GitHub Data" icon="github">
+    Search and retrieve GitHub repositories, issues, PRs, and users
+    - `GET /api/search-repos`
+    - `GET /api/search-issues`
+    - `GET /api/search-prs`
+    - `GET /api/search-users`
+    - `GET /api/search-code`
+    - `GET /api/user-repos`
+    - `GET /api/org-repos`
+  </Card>
+  
+  <Card title="Repository Files" icon="folder">
+    Access repository files and code
+    - `GET /api/file-content`
+    - `GET /api/repo-files`
+    - `GET /api/highlight-code`
+  </Card>
+  
+  <Card title="Workflows & Actions" icon="play">
+    GitHub Actions workflow runs and logs
+    - `GET /api/workflow-runs`
+    - `GET /api/job-logs`
+    - `GET /api/check-status`
+  </Card>
+  
+  <Card title="AI Features" icon="brain">
+    AI-powered chat, commit messages, and code assistance
+    - `POST /api/ai/ghost` - AI chat with GitHub context
+    - `POST /api/ai/commit-message` - Generate commit messages
+    - `POST /api/ai/command` - Execute AI commands
+    - `GET /api/ai/chat-history` - Retrieve chat history
+  </Card>
+  
+  <Card title="Billing & Credits" icon="credit-card">
+    Credit balance and spending limits
+    - `GET /api/billing/balance`
+    - `GET /api/billing/spending-limit`
+    - `PATCH /api/billing/spending-limit`
+    - `POST /api/billing/welcome`
+  </Card>
+  
+  <Card title="Utilities" icon="tools">
+    Helper endpoints for images, merge conflicts, and uploads
+    - `GET /api/github-image`
+    - `GET /api/merge-conflicts`
+    - `POST /api/upload`
+    - `GET /api/rate-limit`
+  </Card>
+</CardGroup>
+
+## Authentication Required
+
+Most API endpoints require authentication. See the [Authentication](/api/authentication) guide for details on:
+
+- GitHub OAuth flow
+- Personal Access Token (PAT) sign-in
+- Session management
+- Using sessions in API requests
+
+<Note>
+  Unauthenticated requests will receive a `401 Unauthorized` response.
+</Note>
+
+## CORS & Security
+
+The API is configured with trusted origins:
+- `https://www.better-hub.com` (production)
+- `https://beta.better-hub.com` (beta environment)
+- `https://better-hub-*-better-auth.vercel.app` (Vercel previews)
+
+Cross-origin requests from other domains will be rejected.
+
+## Common Query Parameters
+
+Many search and list endpoints support these query parameters:
+
+<ResponseField name="page" type="number" default="1">
+  Page number for pagination
+</ResponseField>
+
+<ResponseField name="per_page" type="number" default="30">
+  Number of results per page (max: 100)
+</ResponseField>
+
+<ResponseField name="q" type="string">
+  Search query string
+</ResponseField>
+
+<ResponseField name="sort" type="string">
+  Sort field (varies by endpoint)
+</ResponseField>
+
+<ResponseField name="order" type="string">
+  Sort order: `asc` or `desc`
+</ResponseField>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api/authentication">
+    Learn how to authenticate API requests
+  </Card>
+  
+  <Card title="GitHub Integration" icon="github">
+    Explore GitHub data endpoints
+  </Card>
+  
+  <Card title="AI Features" icon="sparkles">
+    Use AI-powered features
+  </Card>
+  
+  <Card title="Example Apps" icon="code">
+    Build with the Better Hub API
+  </Card>
+</CardGroup>

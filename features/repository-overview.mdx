@@ -1,0 +1,174 @@
+---
+title: Repository Overview
+description: Enhanced repository view with README, file tree, and activity feed
+---
+
+## Overview
+
+Better Hub's repository overview provides a comprehensive view of your project at a glance. Unlike GitHub's standard layout, the overview combines README documentation, recent activity, open PRs, issues, and CI/CD status in a single, organized dashboard.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="README Rendering" icon="book-open">
+    Beautiful Markdown rendering with syntax highlighting and responsive design
+  </Card>
+  <Card title="File Tree Navigation" icon="folder-tree">
+    Browse repository structure without leaving the overview
+  </Card>
+  <Card title="Activity Feed" icon="activity">
+    Track recent commits, PRs, and issues in real-time
+  </Card>
+  <Card title="Quick Stats" icon="chart-line">
+    See stars, forks, open issues, and PR counts instantly
+  </Card>
+</CardGroup>
+
+## Layout Structure
+
+The repository overview uses a multi-column layout optimized for productivity:
+
+### Left Panel: README & Documentation
+- Full README rendering with GitHub-flavored Markdown
+- Syntax-highlighted code blocks
+- Interactive checkboxes for task lists
+- Automatic table of contents for long READMEs
+- Image and media support
+
+### Right Panel: Repository Insights
+
+<Tabs>
+  <Tab title="Pull Requests">
+    - **Open PRs**: Up to 10 recent open pull requests
+    - **Sort options**: Newest, Oldest, Most Discussed
+    - **Quick metadata**: Author, creation date, comment count
+    - Click any PR to open detailed view
+  </Tab>
+  <Tab title="Issues">
+    - **Open issues**: Latest issues requiring attention
+    - **Status indicators**: Visual icons for open/closed state
+    - **Labels**: Color-coded tags at a glance
+    - **Assignees**: See who's working on what
+  </Tab>
+  <Tab title="Activity">
+    - **Recent events**: Commits, PR merges, issue updates
+    - **User attribution**: Avatar and username for each event
+    - **Timestamps**: Relative time ("2 hours ago")
+    - **Event types**: Push, PR opened/merged, issue closed, etc.
+  </Tab>
+  <Tab title="CI/CD Status">
+    - **Workflow runs**: Latest GitHub Actions results
+    - **Status badges**: Success, failure, in progress indicators
+    - **Branch tracking**: See status across different branches
+    - **Quick navigation**: Jump to workflow details with one click
+  </Tab>
+</Tabs>
+
+## Pinned Items
+
+Customize your repository overview by pinning important items:
+
+1. Navigate to any PR, issue, commit, or sub-page within the repository
+2. Press `⌘K` to open the command center
+3. Select **"Pin this page"** from the commands list
+4. The item appears in your repository overview for quick access
+
+<Note>
+Pinned items are personal to your account and sync across devices. They appear at the top of the overview panel for instant access.
+</Note>
+
+### What You Can Pin
+- Pull requests (#123)
+- Issues (#456)
+- Specific commits (abc1234)
+- Actions workflows
+- Security advisories
+- Any other repository page
+
+## Public Preview Mode
+
+For repository owners, Better Hub offers a **Public Preview** to see what visitors see:
+
+1. On your repository overview, press `⌘K`
+2. Select **"Preview Public View"**
+3. The view switches to README-only mode (similar to github.com)
+4. Exit preview mode with the same command or `ESC`
+
+<Tip>
+Public Preview is useful for checking how your README appears to contributors who don't have repository access.
+</Tip>
+
+## README Toolbar
+
+When viewing a README, a contextual toolbar provides quick actions:
+
+- **Edit on GitHub**: Opens the file in GitHub's editor
+- **Raw view**: See the Markdown source
+- **Copy link**: Share the exact README section
+- **Refresh**: Reload README after recent changes
+
+## Keyboard Navigation
+
+Navigate the overview efficiently with keyboard shortcuts:
+
+| Shortcut | Action |
+|----------|--------|
+| `⌘K` | Open command center |
+| `⌘G` | Go to file in repository |
+| `T` | File finder (alternative) |
+| `↑` `↓` | Navigate between items |
+| `Enter` | Open selected item |
+
+## Activity Feed Details
+
+The activity feed shows a chronological timeline of repository events:
+
+### Event Types
+- **Push**: Commits pushed to branches
+- **Pull Request**: PR opened, merged, or closed
+- **Issue**: Issue created or closed
+- **Review**: PR review submitted
+- **Comment**: Comments on PRs or issues
+- **Release**: New release published
+
+### Event Information
+Each event displays:
+- User avatar and name
+- Action performed
+- Target (PR #, issue #, branch name)
+- Relative timestamp
+- Clickable link to the full event
+
+<Accordion title="How often does the activity feed update?">
+The activity feed updates in real-time when you perform actions in Better Hub. External changes from GitHub sync within 60 seconds. You can manually refresh using the refresh button in the toolbar.
+</Accordion>
+
+## Commit Activity Chart
+
+View repository contribution trends with the commit activity visualization:
+
+- **12-week history**: See commit frequency over the past 3 months
+- **Spike detection**: Identify periods of high activity
+- **Color intensity**: Darker colors indicate more commits
+- **Hover details**: Exact commit count per week
+
+## Best Practices
+
+<Tip>
+**Pin strategically**: Pin no more than 5-6 items to keep the overview clean and actionable. Unpin completed items regularly.
+</Tip>
+
+<Tip>
+**Use README sections**: Break your README into clear sections with headers. Better Hub auto-generates navigation anchors for easier browsing.
+</Tip>
+
+<Tip>
+**Monitor CI/CD**: The status panel shows failures immediately. Use it as a health dashboard for your main branch.
+</Tip>
+
+## Related Features
+
+- [Pull Requests](/features/pull-requests) - Review PRs shown in the overview
+- [Issues](/features/issues) - Manage issues from the overview
+- [Command Center](/features/command-center) - Pin items and navigate quickly
+- [Ghost AI](/features/ghost-ai) - Ask Ghost about repository content

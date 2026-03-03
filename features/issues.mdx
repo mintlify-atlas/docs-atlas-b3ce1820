@@ -1,0 +1,302 @@
+---
+title: Issue Management
+description: Advanced issue triage, filtering, and collaboration tools
+---
+
+## Overview
+
+Better Hub's issue management provides powerful filtering, sorting, and triage capabilities to help you organize and prioritize work efficiently. Track bugs, feature requests, and tasks with enhanced visibility and workflow tools.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Advanced Filters" icon="filter">
+    Filter by author, label, assignee, milestone, and activity level
+  </Card>
+  <Card title="Smart Sorting" icon="arrow-down-up">
+    Sort by newest, oldest, comments, reactions, or last update
+  </Card>
+  <Card title="Quick Triage" icon="list-checks">
+    Keyboard navigation for rapid issue processing
+  </Card>
+  <Card title="Real-time Updates" icon="refresh-cw">
+    See status changes and new issues instantly
+  </Card>
+</CardGroup>
+
+## Issue List View
+
+The issue list provides a comprehensive overview of all repository issues:
+
+### Layout
+
+```
+[Search Bar]  [Sort]  [Filters]  [New Issue]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Open] [Closed] [Not Planned]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+● #123  Fix authentication bug
+   bug, priority:high
+   @user · opened 2 hours ago
+   Updated 1 hour ago · 5 comments · 3 👍
+```
+
+### Issue Metadata Display
+
+Each issue shows:
+- **Status icon**: ● (open), ✓ (closed/completed), ⊘ (not planned)
+- **Issue number**: `#123` for quick reference
+- **Title**: Truncated to fit, hover for full text
+- **Labels**: Up to 3 color-coded labels shown
+- **Milestone**: Small badge if assigned
+- **Author**: Avatar + username
+- **Timestamps**: Created and last updated  
+- **Engagement**: Comment count and reaction count
+- **Assignees**: Avatars of assigned users (up to 3)
+
+## Filtering Issues
+
+Better Hub provides multi-dimensional filtering:
+
+### Quick Filters
+
+Click **"Filters"** to open the filter panel with these options:
+
+<Tabs>
+  <Tab title="Activity">
+    - **All**: No activity filter
+    - **Active**: 5+ comments (busy discussions)
+    - **No Response**: 0 comments (needs attention)
+    - **Quiet**: 1-2 comments (low activity)
+  </Tab>
+  <Tab title="Assignee">
+    - **All**: Show all issues
+    - **Assigned**: Only issues with assignees
+    - **Unassigned**: Issues needing assignment
+  </Tab>
+  <Tab title="Author">
+    - Searchable list of all issue authors
+    - Click an author to filter their issues
+    - Clear with the X button
+  </Tab>
+  <Tab title="Label">
+    - Shows up to 10 most used labels
+    - Color-coded for visual scanning
+    - Click to toggle (can combine with other filters)
+  </Tab>
+  <Tab title="Milestone">
+    - Filter by milestone name
+    - See progress toward release goals
+    - Combine with status tabs for planning
+  </Tab>
+</Tabs>
+
+### Combining Filters
+
+<Note>
+Filters stack! You can combine author + label + activity for precise queries like "unassigned bugs from external contributors with no responses."
+</Note>
+
+Active filters show:
+- **Badge count**: Number in the Filters button
+- **Active chips**: Visual tags below the toolbar
+- **Clear all**: Remove all filters at once
+
+## Sorting Issues
+
+Cycle through sort modes by clicking the **Sort** button:
+
+| Sort Mode | Description | Use Case |
+|-----------|-------------|----------|
+| **Updated** | Most recently modified first | Default - see active issues |
+| **Newest** | Recently opened first | Triage new submissions |
+| **Oldest** | Oldest issues first | Find stale/forgotten issues |
+| **Comments** | Most discussed first | Identify complex issues |
+| **Reactions** | Most 👍 first | Community priorities |
+
+<Tip>
+Use **Oldest + Unassigned** to find issues that slipped through the cracks.
+</Tip>
+
+## State Tabs
+
+Issues are organized into three tabs:
+
+### Open
+- Active issues needing attention
+- Default view when you load the page
+- Count updates in real-time as issues are closed
+
+### Closed
+- Issues marked as completed/fixed
+- Includes merged PRs that fixed the issue
+- State reason: "completed"
+
+### Not Planned
+- Issues closed without action
+- "Won't fix" or "duplicate" issues
+- State reason: "not_planned"
+
+<Accordion title="Why separate Closed and Not Planned?">
+This distinction helps with metrics and retrospectives. "Closed" issues represent completed work, while "Not Planned" issues don't count toward team velocity.
+</Accordion>
+
+## Search Bar
+
+The search bar supports multiple query types:
+
+### Search Syntax
+
+```
+#123           → Find issue by number
+bug fix        → Search in title
+@username      → Find issues mentioning user
+label:bug      → Issues with specific label
+milestone:v2.0 → Issues in milestone
+```
+
+### What Gets Searched
+- Issue title
+- Issue number (with or without `#`)
+- Author username
+- Label names
+- Milestone titles
+
+## Keyboard Navigation
+
+Navigate issues efficiently without touching the mouse:
+
+1. Focus is on the **search bar** by default
+2. Press `↓` to move to the first issue
+3. Continue `↓` / `↑` to navigate the list
+4. Press `Enter` to open the selected issue
+5. Press `/` from anywhere to refocus search
+
+<Note>
+The search bar is auto-focused when you open the issues page for keyboard-first workflow.
+</Note>
+
+## Creating Issues
+
+Click **"New Issue"** or press `C` to open the issue creation dialog:
+
+### Issue Form Fields
+
+- **Title** (required): Brief, specific description
+- **Description**: Markdown editor with preview
+  - Templates auto-load if configured
+  - Supports code blocks, images, checklists
+  - @mention users for notification
+- **Assignees**: Pick from repository collaborators  
+- **Labels**: Select multiple labels
+- **Milestone**: Associate with release/sprint
+- **Projects**: Add to GitHub Projects (if enabled)
+
+### Issue Templates
+
+If your repository has issue templates, you'll see them as options:
+- Bug report
+- Feature request  
+- Custom templates
+- Blank issue
+
+## Issue Detail View
+
+Clicking an issue opens the detail page:
+
+### Left Column: Conversation
+
+- Original issue description
+- All comments (chronological)
+- Inline editor for replies
+- Reactions on comments
+- Cross-references to PRs and other issues
+
+### Right Sidebar: Metadata & Actions
+
+- **Assignees**: Add/remove assignees  
+- **Labels**: Add/remove labels
+- **Milestone**: Set or change milestone
+- **Notifications**: Subscribe/unsubscribe
+- **Lock conversation**: Prevent new comments (maintainers only)
+- **Close issue**: Mark as closed or not planned
+
+### Timeline Events
+
+The issue timeline shows:
+- Comments
+- Label changes  
+- Assignee changes
+- Milestone changes
+- Close/reopen events
+- Cross-references from PRs
+- Linked commits
+
+## Ghost AI for Issues
+
+Press `⌘I` on any issue to ask Ghost:
+
+### Common Issue Queries
+
+- "Summarize this issue"
+- "What's the current status?"
+- "Are there related PRs?"
+- "Draft a response to the author"
+- "Suggest labels for this issue"
+
+### Issue Triage with Ghost
+
+From the issue list, use Ghost to:
+
+1. Open Ghost with `⌘I`
+2. Ask: "Show open issues that need triage"
+3. Ghost filters for:
+   - No assignees
+   - No labels  
+   - No responses
+   - Older than 7 days
+
+<Tip>
+Ask Ghost to "Create an issue for [feature]" and it will draft the title and description for you.
+</Tip>
+
+## Linked Pull Requests
+
+Issues automatically detect linked PRs:
+
+- PRs that mention the issue number
+- PRs with "Fixes #123" or "Closes #456" in description
+- Visual indicator: **🔗 Linked PR** tag on the issue
+- Click to navigate to the PR
+
+## Best Practices
+
+<Tip>
+**Label on intake**: Immediately label new issues during triage. Use `bug`, `enhancement`, `question`, `good first issue`, etc.
+</Tip>
+
+<Tip>
+**Assign milestones**: Group issues by release to track progress. Use milestones as sprints or version targets.
+</Tip>
+
+<Tip>
+**Close promptly**: When a PR fixes an issue, close it with a comment explaining the resolution. Keeps the list actionable.
+</Tip>
+
+<Tip>
+**Use "Not Planned" wisely**: It's okay to close issues you won't address. Better than letting them languish as open.
+</Tip>
+
+## Bulk Actions
+
+<Note>
+Bulk actions are coming soon! You'll be able to select multiple issues and apply labels, assignees, or close them in batch.
+</Note>
+
+## Related Features
+
+- [Ghost AI](/features/ghost-ai) - AI-powered issue triage and responses
+- [Repository Overview](/features/repository-overview) - See recent issues on overview
+- [Pull Requests](/features/pull-requests) - Link PRs to issues
+- [Keyboard Shortcuts](/features/keyboard-shortcuts) - All issue shortcuts

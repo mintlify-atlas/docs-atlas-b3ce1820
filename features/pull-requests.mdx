@@ -1,0 +1,272 @@
+---
+title: Pull Request Reviews
+description: Enhanced PR reviews with inline diffs, AI summaries, and collaborative review comments
+---
+
+## Overview
+
+Better Hub transforms pull request reviews with a streamlined interface, inline diff rendering, AI-powered insights, and real-time collaboration features. Review code faster and more thoroughly than ever before.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Inline Diff Viewer" icon="code-compare">
+    Side-by-side or unified diff view with syntax highlighting
+  </Card>
+  <Card title="AI Summaries" icon="sparkles">
+    Ghost AI generates PR summaries and identifies potential issues
+  </Card>
+  <Card title="Review Comments" icon="message-square">
+    Thread-based discussions on specific code lines
+  </Card>
+  <Card title="Conflict Resolution" icon="git-merge">
+    Visual merge conflict resolver built into the interface
+  </Card>
+</CardGroup>
+
+## PR Review Interface
+
+The pull request page is organized into three main tabs:
+
+<Tabs>
+  <Tab title="Conversation">
+    - PR description and context
+    - All comments and review threads
+    - Timeline of events (commits, reviews, status changes)
+    - Issue and commit cross-references
+  </Tab>
+  <Tab title="Files Changed">
+    - Inline diff viewer with syntax highlighting
+    - File tree navigation
+    - Add comments directly on code lines
+    - Expand/collapse files for focus
+  </Tab>
+  <Tab title="Checks">
+    - CI/CD status for all workflow runs
+    - Test results and coverage reports
+    - Deployment previews
+    - Required check status
+  </Tab>
+</Tabs>
+
+## Inline Diff Viewer
+
+Better Hub's diff viewer provides a superior code review experience:
+
+### Diff Modes
+
+**Split View (Default)**
+- Left: Original code (base branch)
+- Right: Changed code (PR branch)  
+- Line-by-line comparison
+- Best for large changes
+
+**Unified View**
+- Single column with additions and deletions
+- More compact for small changes
+- Toggle with the view switcher
+
+### Syntax Highlighting
+
+All code is syntax-highlighted using the same engine as your editor:
+- Supports 150+ programming languages
+- Automatic language detection from file extension
+- Theme matches your Better Hub color theme
+
+### Code Navigation
+
+- **File tree**: Navigate between changed files in the sidebar
+- **Jump to file**: Press `⌘K` → "Go to File" to search
+- **Expand/collapse**: Click file headers to focus on specific changes
+- **Sticky headers**: File name stays visible while scrolling
+
+## Review Comments
+
+Add contextual feedback directly in the code:
+
+### Adding a Comment
+
+1. Hover over any line number in the diff
+2. Click the **+** icon that appears
+3. Type your comment (supports Markdown)
+4. Choose:
+   - **Single comment**: Post immediately
+   - **Start a review**: Add to pending review
+
+### Comment Features
+
+<Note>
+All comments support **GitHub-flavored Markdown**, including code blocks, lists, links, and emoji.
+</Note>
+
+- **Line ranges**: Select multiple lines for context
+- **Suggestions**: Propose code changes that can be committed with one click
+- **@mentions**: Tag team members for input
+- **#references**: Link to issues or other PRs
+- **File attachments**: Drag and drop images or files
+
+### Review Threads
+
+Comments on the same code location form a thread:
+- Threaded discussions keep context together
+- Mark threads as resolved when addressed  
+- Outdated threads auto-minimize when code changes
+- Filter: Show all / Hide resolved
+
+## AI-Powered PR Summaries
+
+Ghost AI analyzes pull requests and provides intelligent insights:
+
+### Getting a Summary
+
+1. Open any pull request
+2. Press `⌘I` to open Ghost AI
+3. Click a suggestion:
+   - "Summarize this PR"
+   - "What are the key changes?"
+   - "Are there any potential issues?"
+
+Or type your own question:
+- "Explain the authentication flow changes"
+- "What files are most critical to review?"
+- "Check for security concerns"
+
+### What Ghost Analyzes
+
+- **Code changes**: All modified files and their diffs
+- **PR description**: Context from the author
+- **Commit messages**: Intent behind each change
+- **Comments**: Previous review feedback
+- **Related issues**: Linked GitHub issues
+
+<Tip>
+Use Ghost AI to get oriented quickly when reviewing complex PRs. Ask "What should I focus on?" for a prioritized review checklist.
+</Tip>
+
+## Submitting a Review
+
+Better Hub supports GitHub's three review types:
+
+### Review Workflow
+
+1. **Add comments** to specific lines as you review
+2. Click **"Start a Review"** in the comment box
+3. All comments are batched (not posted yet)
+4. Add more comments across different files
+5. Click **"Finish Review"** in the top bar
+6. Choose review type:
+   - **Comment**: General feedback, no approval
+   - **Approve**: LGTM, ready to merge  
+   - **Request Changes**: Needs fixes before merge
+7. Add an optional summary comment
+8. Submit review
+
+### Pending Reviews
+
+While a review is in progress:
+- **Draft indicator**: Shows you have pending comments
+- **View pending**: See all batched comments
+- **Edit drafts**: Modify comments before submitting  
+- **Discard**: Cancel the review and delete drafts
+
+## Author Dossier
+
+Better Hub provides context about the PR author:
+
+- **Contribution score**: Activity level in this repository
+- **Recent PRs**: Author's last 5 pull requests
+- **Review history**: Past approval/request changes ratio
+- **Response time**: Average time to address feedback
+
+<Accordion title="How is the contribution score calculated?">
+The score combines: commits in the last 90 days, PRs opened, reviews given, and issues addressed. It helps you gauge the author's familiarity with the codebase.
+</Accordion>
+
+## Merge Panel
+
+When you're ready to merge (requires write access):
+
+### Merge Options
+
+<Tabs>
+  <Tab title="Merge Commit">
+    Creates a merge commit preserving all individual commits from the PR.
+    
+    **Best for**: Feature branches with meaningful commit history
+  </Tab>
+  <Tab title="Squash & Merge">
+    Combines all commits into a single commit on the base branch.
+    
+    **Best for**: PRs with many small/WIP commits
+  </Tab>
+  <Tab title="Rebase & Merge">
+    Replays commits from the PR onto the base branch without a merge commit.
+    
+    **Best for**: Maintaining a linear history
+  </Tab>
+</Tabs>
+
+### Pre-Merge Checks
+
+Better Hub shows merge readiness:
+
+- ✅ **All checks passed**: CI/CD workflows succeeded  
+- ✅ **Approved**: Required reviews completed
+- ✅ **No conflicts**: Branch can merge cleanly
+- ✅ **Up to date**: Based on latest base branch
+
+If any check fails, the merge button is disabled with an explanation.
+
+## Conflict Resolution
+
+When a PR has merge conflicts, Better Hub provides a visual resolver:
+
+1. **Detect conflicts**: Banner appears on the PR
+2. Click **"Resolve conflicts"**
+3. Choose resolution for each conflict:
+   - Accept changes from your branch
+   - Accept changes from base branch
+   - Edit manually to combine both
+4. **Mark as resolved** for each file
+5. **Commit resolution** to the PR branch
+
+<Note>
+The conflict resolver supports both simple and complex conflicts. For very large conflicts, you may prefer resolving locally with `git`.
+</Note>
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `⌘I` | Open Ghost AI for PR analysis |
+| `⌘K` | Command center (pin PR, navigate) |
+| `C` | Jump to conversation tab |
+| `F` | Jump to files changed tab |
+| `R` | Start a new review |
+| `⌘Enter` | Submit comment or review |
+| `N` / `P` | Next / Previous file |
+
+## Best Practices
+
+<Tip>
+**Review in passes**: First pass for architecture/approach, second pass for implementation details, third pass for edge cases.
+</Tip>
+
+<Tip>
+**Use suggestions**: When you spot a simple fix, use GitHub's suggestion syntax so the author can commit it with one click.
+</Tip>
+
+<Tip>
+**Ask Ghost first**: Before deep-diving, ask Ghost "What are the key changes?" to build a mental model.
+</Tip>
+
+<Tip>
+**Resolve threads**: Mark review threads as resolved once the author addresses them. Keeps the PR clean.
+</Tip>
+
+## Related Features
+
+- [Ghost AI](/features/ghost-ai) - AI-powered PR summaries and review assistance
+- [CI/CD Status](/features/ci-cd) - View workflow runs and checks
+- [Command Center](/features/command-center) - Navigate and pin PRs
+- [Keyboard Shortcuts](/features/keyboard-shortcuts) - All PR shortcuts reference

@@ -1,0 +1,571 @@
+---
+title: AI Chat API
+description: AI-powered chat endpoints for Better Hub
+---
+
+Better Hub provides AI chat capabilities for interacting with GitHub repositories, pull requests, issues, and general GitHub operations.
+
+## POST /api/ai/ghost
+
+Create or continue an AI conversation with context-aware GitHub assistance. Supports streaming responses with tool execution.
+
+<ParamField body="messages" type="array" required>
+  Array of conversation messages with role and content
+  ```typescript
+  {
+    role: 'user' | 'assistant' | 'system',
+    content: string,
+    parts?: Array<{type: 'text', text: string}>
+  }
+  ```
+</ParamField>
+
+<ParamField body="prContext" type="object">
+  Pull request context for PR-specific assistance
+  
+  <ParamField body="owner" type="string" required>
+    Repository owner
+  </ParamField>
+  
+  <ParamField body="repo" type="string" required>
+    Repository name
+  </ParamField>
+  
+  <ParamField body="pullNumber" type="number" required>
+    Pull request number
+  </ParamField>
+  
+  <ParamField body="prTitle" type="string" required>
+    Pull request title
+  </ParamField>
+  
+  <ParamField body="prBody" type="string">
+    Pull request description
+  </ParamField>
+  
+  <ParamField body="baseBranch" type="string" required>
+    Base branch name
+  </ParamField>
+  
+  <ParamField body="headBranch" type="string" required>
+    Head branch name
+  </ParamField>
+  
+  <ParamField body="files" type="array">
+    Array of changed files with patches
+  </ParamField>
+  
+  <ParamField body="mergeConflict" type="boolean">
+    Whether the PR has merge conflicts
+  </ParamField>
+</ParamField>
+
+<ParamField body="issueContext" type="object">
+  Issue context for issue-specific assistance
+  
+  <ParamField body="owner" type="string" required>
+    Repository owner
+  </ParamField>
+  
+  <ParamField body="repo" type="string" required>
+    Repository name
+  </ParamField>
+  
+  <ParamField body="issueNumber" type="number" required>
+    Issue number
+  </ParamField>
+  
+  <ParamField body="title" type="string" required>
+    Issue title
+  </ParamField>
+  
+  <ParamField body="body" type="string">
+    Issue description
+  </ParamField>
+  
+  <ParamField body="state" type="string">
+    Issue state (open/closed)
+  </ParamField>
+  
+  <ParamField body="labels" type="array">
+    Array of label names
+  </ParamField>
+</ParamField>
+
+<ParamField body="pageContext" type="object">
+  Current page context for better assistance
+  
+  <ParamField body="pathname" type="string">
+    Current page pathname
+  </ParamField>
+</ParamField>
+
+### Response (Streaming)
+
+Returns a streaming response with AI-generated text and tool execution results.
+
+<ResponseField name="stream" type="ReadableStream">
+  Server-sent events stream containing:
+  - Text chunks from the AI model
+  - Tool execution results
+  - Usage statistics
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const response = await fetch('/api/ai/ghost', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: [
+      { role: 'user', content: 'Review this pull request for potential issues' }
+    ],
+    prContext: {
+      owner: 'acme',
+      repo: 'app',
+      pullNumber: 42,
+      prTitle: 'Add user authentication',
+      prBody: 'Implements JWT-based authentication',
+      baseBranch: 'main',
+      headBranch: 'feature/auth',
+      files: [
+        { filename: 'auth.ts', patch: '...' }
+      ]
+    }
+  })
+});
+
+const reader = response.body.getReader();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  // Process streaming chunks
+}
+```
+
+```json Error Response (429)
+{
+  "error": "RATE_LIMIT_EXCEEDED",
+  "allowed": false,
+  "reason": "rate_limit",
+  "periodUsageUsd": 15.50,
+  "monthlyCapUsd": 10.00
+}
+```
+</CodeGroup>
+
+<Warning>
+  This endpoint consumes AI credits and is subject to rate limiting. Check `/api/rate-limit` and `/api/billing/spending-limit` before making requests.
+</Warning>
+
+---
+
+## GET /api/ai/ghost/[id]/stream
+
+Resume an existing AI conversation stream that was interrupted.
+
+<ParamField path="id" type="string" required>
+  Context key for the conversation
+</ParamField>
+
+<ParamField query="resumeAt" type="number">
+  Stream position to resume from (in bytes)
+</ParamField>
+
+### Response
+
+<ResponseField name="stream" type="ReadableStream">
+  Continuation of the existing stream from the specified position
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const response = await fetch('/api/ai/ghost/pr-123/stream?resumeAt=2048', {
+  method: 'GET'
+});
+
+const reader = response.body.getReader();
+// Continue reading stream
+```
+
+```text Response (204)
+No Content - Stream not found or already completed
+```
+</CodeGroup>
+
+---
+
+## POST /api/ai/command
+
+Execute AI-powered GitHub commands via natural language (used in command palette).
+
+<ParamField body="messages" type="array" required>
+  Array of conversation messages
+</ParamField>
+
+<ParamField body="pageContext" type="object">
+  Current page context including:
+  
+  <ParamField body="page" type="string">
+    Current page type (repo, issue, pr, etc.)
+  </ParamField>
+  
+  <ParamField body="pathname" type="string">
+    Current URL pathname
+  </ParamField>
+  
+  <ParamField body="entities" type="array">
+    Entities visible on current page
+    ```typescript
+    {
+      type: string,
+      id: string,
+      name: string,
+      [key: string]: unknown
+    }
+    ```
+  </ParamField>
+</ParamField>
+
+### Response
+
+<ResponseField name="stream" type="ReadableStream">
+  Streaming response with command execution results
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const response = await fetch('/api/ai/command', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: [
+      { role: 'user', content: 'Star this repository' }
+    ],
+    pageContext: {
+      page: 'repo',
+      pathname: '/repos/vercel/next.js',
+      entities: [
+        { type: 'repo', id: 'vercel/next.js', name: 'Next.js' }
+      ]
+    }
+  })
+});
+```
+
+```json Error Response (401)
+{
+  "error": "Unauthorized"
+}
+```
+</CodeGroup>
+
+---
+
+## POST /api/ai/commit-message
+
+Generate AI-powered commit messages from file changes or PR information.
+
+<ParamField body="mode" type="string">
+  Generation mode: `"squash"` for PR squash commits or omit for single file commits
+</ParamField>
+
+### For Single File Commits
+
+<ParamField body="filename" type="string" required>
+  Name of the changed file
+</ParamField>
+
+<ParamField body="originalContent" type="string" required>
+  Original file content
+</ParamField>
+
+<ParamField body="newContent" type="string" required>
+  Modified file content
+</ParamField>
+
+### For PR Squash Commits
+
+<ParamField body="prTitle" type="string" required>
+  Pull request title
+</ParamField>
+
+<ParamField body="prBody" type="string">
+  Pull request description
+</ParamField>
+
+<ParamField body="prNumber" type="number" required>
+  Pull request number
+</ParamField>
+
+<ParamField body="commits" type="array">
+  Array of commit messages to squash (max 30)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Generated commit message (for single file)
+</ResponseField>
+
+<ResponseField name="title" type="string">
+  Generated commit title (for squash)
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Generated commit description (for squash)
+</ResponseField>
+
+<CodeGroup>
+```typescript Single File Request
+const response = await fetch('/api/ai/commit-message', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    filename: 'auth.ts',
+    originalContent: 'const auth = null;',
+    newContent: 'const auth = new AuthService();'
+  })
+});
+
+const data = await response.json();
+// { message: "feat: initialize AuthService in auth.ts" }
+```
+
+```typescript Squash Commit Request
+const response = await fetch('/api/ai/commit-message', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    mode: 'squash',
+    prTitle: 'Add user authentication',
+    prBody: 'Implements JWT-based authentication with refresh tokens',
+    prNumber: 42,
+    commits: [
+      'Add JWT service',
+      'Implement token refresh',
+      'Add auth middleware'
+    ]
+  })
+});
+
+const data = await response.json();
+/*
+{
+  title: "feat: add user authentication (#42)",
+  description: "- Implement JWT-based authentication\n- Add token refresh mechanism\n- Create auth middleware"
+}
+*/
+```
+
+```json Error Response (429)
+{
+  "error": "RATE_LIMIT_EXCEEDED",
+  "allowed": false,
+  "reason": "rate_limit"
+}
+```
+</CodeGroup>
+
+<Warning>
+  This endpoint consumes AI credits. Maximum code length is determined by the model context window.
+</Warning>
+
+---
+
+## Chat History Endpoints
+
+### GET /api/ai/chat-history
+
+Retrieve chat conversation history.
+
+<ParamField query="contextKey" type="string">
+  Context key for a specific conversation
+</ParamField>
+
+<ParamField query="list" type="string">
+  Set to `"ghost"` to list all ghost chat conversations
+</ParamField>
+
+### Response
+
+<ResponseField name="conversation" type="object">
+  Conversation metadata
+  
+  <ResponseField name="id" type="string">
+    Conversation ID
+  </ResponseField>
+  
+  <ResponseField name="userId" type="string">
+    User ID
+  </ResponseField>
+  
+  <ResponseField name="chatType" type="string">
+    Type of chat (ghost, command, etc.)
+  </ResponseField>
+  
+  <ResponseField name="contextKey" type="string">
+    Context identifier
+  </ResponseField>
+  
+  <ResponseField name="title" type="string">
+    Conversation title
+  </ResponseField>
+  
+  <ResponseField name="activeStreamId" type="string">
+    Active stream ID if streaming
+  </ResponseField>
+  
+  <ResponseField name="createdAt" type="string">
+    Creation timestamp
+  </ResponseField>
+  
+  <ResponseField name="updatedAt" type="string">
+    Last update timestamp
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="messages" type="array">
+  Array of conversation messages
+</ResponseField>
+
+<CodeGroup>
+```typescript Get Conversation
+const response = await fetch('/api/ai/chat-history?contextKey=pr-123');
+const data = await response.json();
+/*
+{
+  conversation: {
+    id: "conv_123",
+    userId: "user_456",
+    chatType: "ghost",
+    contextKey: "pr-123",
+    title: "Review PR #123",
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-15T10:05:00Z"
+  },
+  messages: [
+    {
+      id: "msg_1",
+      role: "user",
+      content: "Review this PR",
+      createdAt: "2024-01-15T10:00:00Z"
+    }
+  ]
+}
+*/
+```
+
+```typescript List Conversations
+const response = await fetch('/api/ai/chat-history?list=ghost');
+const data = await response.json();
+/*
+{
+  conversations: [
+    {
+      id: "conv_123",
+      contextKey: "pr-123",
+      title: "Review PR #123",
+      updatedAt: "2024-01-15T10:05:00Z"
+    }
+  ]
+}
+*/
+```
+</CodeGroup>
+
+### POST /api/ai/chat-history
+
+Save a message to a conversation.
+
+<ParamField body="contextKey" type="string" required>
+  Context key for the conversation
+</ParamField>
+
+<ParamField body="chatType" type="string" required>
+  Type of chat
+</ParamField>
+
+<ParamField body="message" type="object" required>
+  Message to save
+</ParamField>
+
+### DELETE /api/ai/chat-history
+
+Delete a conversation.
+
+<ParamField query="conversationId" type="string" required>
+  ID of conversation to delete
+</ParamField>
+
+---
+
+## Ghost Tab Management
+
+### GET /api/ai/ghost-tabs
+
+Get the current state of Ghost chat tabs for the user.
+
+### Response
+
+<ResponseField name="tabs" type="array">
+  Array of active tabs
+</ResponseField>
+
+<ResponseField name="activeTabId" type="string">
+  Currently active tab ID
+</ResponseField>
+
+<ResponseField name="counter" type="number">
+  Tab counter for generating new tab IDs
+</ResponseField>
+
+### POST /api/ai/ghost-tabs
+
+Manage Ghost chat tabs.
+
+<ParamField body="action" type="string" required>
+  Action to perform: `"add"`, `"close"`, `"rename"`, or `"switch"`
+</ParamField>
+
+<ParamField body="tabId" type="string">
+  Tab ID (required for all actions)
+</ParamField>
+
+<ParamField body="label" type="string">
+  Tab label (required for add and rename)
+</ParamField>
+
+<ParamField body="counter" type="number">
+  Counter value (required for add)
+</ParamField>
+
+<ParamField body="newDefault" type="string">
+  New default tab ID (for close action)
+</ParamField>
+
+<CodeGroup>
+```typescript Add Tab
+const response = await fetch('/api/ai/ghost-tabs', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    action: 'add',
+    tabId: 'tab-1',
+    label: 'New Chat',
+    counter: 1
+  })
+});
+```
+
+```typescript Switch Tab
+const response = await fetch('/api/ai/ghost-tabs', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    action: 'switch',
+    tabId: 'tab-1'
+  })
+});
+```
+</CodeGroup>

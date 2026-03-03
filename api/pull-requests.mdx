@@ -1,0 +1,222 @@
+---
+title: "Pull Request Endpoints"
+description: "API endpoints for searching and retrieving pull requests"
+---
+
+## Search Pull Requests
+
+Search for pull requests across GitHub using GitHub's search syntax.
+
+```bash
+GET /api/search-prs
+```
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search query using [GitHub search syntax](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
+  
+  The `is:pr` qualifier is automatically added to your query.
+  
+  **Examples:**
+  - `repo:owner/repo` - Search in a specific repository
+  - `author:username` - PRs by a specific author
+  - `is:open` - Only open PRs
+  - `is:closed` - Only closed PRs
+  - `state:merged` - Only merged PRs
+  - `label:bug` - PRs with the "bug" label
+  - `created:>2024-01-01` - PRs created after a date
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="per_page" type="number" default="30">
+  Number of results per page (minimum: 1, maximum: 100)
+</ParamField>
+
+### Response
+
+Returns the standard GitHub search response object.
+
+<ResponseField name="total_count" type="number">
+  Total number of pull requests matching the search
+</ResponseField>
+
+<ResponseField name="incomplete_results" type="boolean">
+  Whether the search results are incomplete
+</ResponseField>
+
+<ResponseField name="items" type="object[]">
+  Array of pull request objects matching GitHub's PR format
+  
+  <Expandable title="Pull Request Object (selected fields)">
+    <ResponseField name="id" type="number">
+      Pull request ID
+    </ResponseField>
+    
+    <ResponseField name="number" type="number">
+      Pull request number
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Pull request title
+    </ResponseField>
+    
+    <ResponseField name="state" type="string">
+      State: "open" or "closed"
+    </ResponseField>
+    
+    <ResponseField name="user" type="object">
+      Author information (login, avatar_url, etc.)
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+    
+    <ResponseField name="html_url" type="string">
+      GitHub URL to the pull request
+    </ResponseField>
+    
+    <ResponseField name="labels" type="object[]">
+      Array of label objects
+    </ResponseField>
+    
+    <ResponseField name="draft" type="boolean">
+      Whether the PR is a draft
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/search-prs?q=repo:octocat/Hello-World+is:open&per_page=10"
+```
+
+```javascript fetch
+const response = await fetch('/api/search-prs?q=repo:octocat/Hello-World+author:octocat&page=1&per_page=30');
+const data = await response.json();
+console.log(`Found ${data.total_count} pull requests`);
+```
+
+```python requests
+import requests
+
+params = {
+    "q": "repo:octocat/Hello-World is:open",
+    "per_page": 10
+}
+response = requests.get("https://yourdomain.com/api/search-prs", params=params)
+data = response.json()
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "total_count": 42,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 1234567890,
+      "number": 123,
+      "title": "Add new feature",
+      "state": "open",
+      "user": {
+        "login": "octocat",
+        "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+      },
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-16T14:20:00Z",
+      "html_url": "https://github.com/octocat/Hello-World/pull/123",
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "84b6eb"
+        }
+      ],
+      "draft": false
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing query parameter"
+  }
+  ```
+  The `q` query parameter is required.
+</Expandable>
+
+<Expandable title="401 Unauthorized">
+  ```json
+  {
+    "error": "Not authenticated"
+  }
+  ```
+  User is not authenticated. This endpoint requires authentication.
+</Expandable>
+
+## Search Query Examples
+
+Here are some common search patterns:
+
+<CodeGroup>
+
+```bash Open PRs in a repo
+GET /api/search-prs?q=repo:owner/name+is:open
+```
+
+```bash PRs by author
+GET /api/search-prs?q=author:username+is:pr
+```
+
+```bash Recent PRs
+GET /api/search-prs?q=created:>2024-01-01
+```
+
+```bash PRs with label
+GET /api/search-prs?q=label:bug+is:open
+```
+
+```bash Complex query
+GET /api/search-prs?q=repo:owner/name+is:open+label:enhancement+author:username
+```
+
+</CodeGroup>
+
+## Rate Limiting
+
+This endpoint is subject to GitHub API rate limits:
+
+- **Authenticated requests:** 5,000 requests per hour
+- **Search API specific:** 30 requests per minute
+
+The GitHub integration in `/lib/github.ts` includes rate limit error handling via `GitHubRateLimitError` which provides:
+- `resetAt` - Unix timestamp when the rate limit resets
+- `limit` - Maximum requests allowed
+- `used` - Number of requests used
+
+## Notes
+
+- Results are automatically sorted by `updated` date in descending order
+- The `is:pr` qualifier is automatically prepended to your search query
+- Maximum 100 results per page
+- Page numbers start at 1 (values < 1 are normalized to 1)
+- All timestamps are in ISO 8601 format (UTC)
+- Authentication is required and managed via session cookies

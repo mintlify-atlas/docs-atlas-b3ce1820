@@ -1,0 +1,100 @@
+---
+title: Browser Extension Overview
+description: Seamlessly redirect GitHub pages to your Better Hub instance
+---
+
+The Better Hub browser extension automatically redirects GitHub URLs to your Better Hub instance, making it easy to use Better Hub as your primary interface for GitHub.
+
+## What It Does
+
+Once installed and configured, the extension:
+
+- **Automatically redirects** GitHub pages to Better Hub while preserving the URL structure
+- **Intelligently routes** different GitHub pages to their Better Hub equivalents
+- **Skips GitHub-only pages** like login, settings, and marketplace that need to stay on GitHub
+- **Toggles on/off** easily from the extension popup
+- **Supports custom instances** — point it to your self-hosted Better Hub
+
+<Card title="Available For" icon="puzzle-piece">
+  Chrome and Firefox extensions are both available with full feature parity.
+</Card>
+
+## How Redirects Work
+
+The extension uses smart URL mapping to redirect you to the right place:
+
+| GitHub URL | Better Hub URL |
+|------------|----------------|
+| `github.com` | `/dashboard` |
+| `/:owner/:repo` | `/:owner/:repo` |
+| `/pull/:number` | `/pull/:number` |
+| `/commit/:sha` | `/commit/:sha` |
+| `/actions/runs/:id` | `/actions/:id` |
+| `/notifications` | `/notifications` |
+| `/trending` | `/trending` |
+| `/pulls` | `/prs` |
+| `/issues` | `/issues` |
+
+### Pages That Stay on GitHub
+
+Certain pages are intentionally not redirected because they only exist on GitHub:
+
+- Account settings
+- Login/signup
+- GitHub Marketplace
+- Sponsors
+- Enterprise/pricing pages
+- Repository settings pages
+- Organization management
+
+## Why Use It?
+
+Instead of manually changing URLs or bookmarking Better Hub links, the extension lets you:
+
+- Click any GitHub link from anywhere (email, Slack, docs) and land in Better Hub
+- Use Better Hub's enhanced UI without changing your workflow
+- Switch between instances easily if you use multiple Better Hub deployments
+- Temporarily disable redirects when you need to use GitHub directly
+
+## Required Permissions
+
+The extension needs specific permissions to function:
+
+<AccordionGroup>
+  <Accordion title="storage">
+    Saves your preferences like the target instance URL and whether redirects are enabled.
+  </Accordion>
+  
+  <Accordion title="declarativeNetRequest">
+    Powers the automatic URL redirection without needing to read page content.
+  </Accordion>
+  
+  <Accordion title="activeTab">
+    Allows the popup to check if the current tab is on GitHub.
+  </Accordion>
+  
+  <Accordion title="webNavigation (Chrome only)">
+    Handles special cases like the GitHub homepage redirect while avoiding logout issues.
+  </Accordion>
+  
+  <Accordion title="Host permission: github.com">
+    Required to intercept and redirect GitHub URLs. The extension only runs on GitHub pages.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  The extension does **not** read page content, track your browsing, or send data anywhere. All redirects happen locally in your browser.
+</Note>
+
+## Get Started
+
+Choose your browser to install:
+
+<CardGroup cols={2}>
+  <Card title="Chrome" icon="chrome" href="./chrome">
+    Install for Chrome, Edge, Brave, and other Chromium browsers
+  </Card>
+  <Card title="Firefox" icon="firefox" href="./firefox">
+    Install for Firefox and Firefox-based browsers
+  </Card>
+</CardGroup>

@@ -1,0 +1,253 @@
+---
+title: "Issue Endpoints"
+description: "API endpoints for searching and retrieving GitHub issues"
+---
+
+## Search Issues
+
+Search for issues across GitHub using GitHub's search syntax.
+
+```bash
+GET /api/search-issues
+```
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search query using [GitHub search syntax](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
+  
+  The `is:issue` qualifier is automatically added to your query.
+  
+  **Examples:**
+  - `repo:owner/repo` - Search in a specific repository
+  - `author:username` - Issues by a specific author
+  - `assignee:username` - Issues assigned to a user
+  - `is:open` - Only open issues
+  - `is:closed` - Only closed issues
+  - `label:bug` - Issues with the "bug" label
+  - `created:>2024-01-01` - Issues created after a date
+  - `in:title` - Search in titles only
+  - `in:body` - Search in issue body
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="per_page" type="number" default="30">
+  Number of results per page (minimum: 1, maximum: 100)
+</ParamField>
+
+### Response
+
+Returns the standard GitHub search response object.
+
+<ResponseField name="total_count" type="number">
+  Total number of issues matching the search
+</ResponseField>
+
+<ResponseField name="incomplete_results" type="boolean">
+  Whether the search results are incomplete
+</ResponseField>
+
+<ResponseField name="items" type="object[]">
+  Array of issue objects matching GitHub's issue format
+  
+  <Expandable title="Issue Object (selected fields)">
+    <ResponseField name="id" type="number">
+      Issue ID
+    </ResponseField>
+    
+    <ResponseField name="number" type="number">
+      Issue number
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Issue title
+    </ResponseField>
+    
+    <ResponseField name="state" type="string">
+      State: "open" or "closed"
+    </ResponseField>
+    
+    <ResponseField name="user" type="object">
+      Author information (login, avatar_url, etc.)
+    </ResponseField>
+    
+    <ResponseField name="assignees" type="object[]">
+      Array of assigned users
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+    
+    <ResponseField name="closed_at" type="string | null">
+      ISO 8601 timestamp or null if open
+    </ResponseField>
+    
+    <ResponseField name="html_url" type="string">
+      GitHub URL to the issue
+    </ResponseField>
+    
+    <ResponseField name="labels" type="object[]">
+      Array of label objects
+    </ResponseField>
+    
+    <ResponseField name="comments" type="number">
+      Number of comments
+    </ResponseField>
+    
+    <ResponseField name="body" type="string">
+      Issue description/body
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/search-issues?q=repo:octocat/Hello-World+is:open+label:bug&per_page=10"
+```
+
+```javascript fetch
+const response = await fetch('/api/search-issues?q=repo:octocat/Hello-World+author:octocat&page=1&per_page=30');
+const data = await response.json();
+console.log(`Found ${data.total_count} issues`);
+```
+
+```python requests
+import requests
+
+params = {
+    "q": "repo:octocat/Hello-World is:open label:bug",
+    "per_page": 10
+}
+response = requests.get("https://yourdomain.com/api/search-issues", params=params)
+data = response.json()
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "total_count": 156,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 9876543210,
+      "number": 42,
+      "title": "Bug in user authentication",
+      "state": "open",
+      "user": {
+        "login": "octocat",
+        "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+      },
+      "assignees": [
+        {
+          "login": "developer1",
+          "avatar_url": "https://github.com/developer1.png"
+        }
+      ],
+      "created_at": "2024-01-10T08:15:00Z",
+      "updated_at": "2024-01-15T16:30:00Z",
+      "closed_at": null,
+      "html_url": "https://github.com/octocat/Hello-World/issues/42",
+      "labels": [
+        {
+          "name": "bug",
+          "color": "d73a4a"
+        },
+        {
+          "name": "priority:high",
+          "color": "ff0000"
+        }
+      ],
+      "comments": 8,
+      "body": "Users are experiencing login failures when..."
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing query parameter"
+  }
+  ```
+  The `q` query parameter is required.
+</Expandable>
+
+<Expandable title="401 Unauthorized">
+  ```json
+  {
+    "error": "Not authenticated"
+  }
+  ```
+  User is not authenticated. This endpoint requires authentication.
+</Expandable>
+
+## Search Query Examples
+
+Here are some common search patterns:
+
+<CodeGroup>
+
+```bash Open bugs
+GET /api/search-issues?q=is:open+label:bug
+```
+
+```bash Issues by author
+GET /api/search-issues?q=author:username+is:issue
+```
+
+```bash Unassigned issues
+GET /api/search-issues?q=repo:owner/name+is:open+no:assignee
+```
+
+```bash Issues with multiple labels
+GET /api/search-issues?q=label:bug+label:critical+is:open
+```
+
+```bash Recent issues
+GET /api/search-issues?q=created:>2024-01-01
+```
+
+```bash Search in title
+GET /api/search-issues?q=authentication+in:title+is:open
+```
+
+</CodeGroup>
+
+## Rate Limiting
+
+This endpoint is subject to GitHub API rate limits:
+
+- **Authenticated requests:** 5,000 requests per hour
+- **Search API specific:** 30 requests per minute
+
+The GitHub integration in `/lib/github.ts` includes rate limit error handling via `GitHubRateLimitError` which provides:
+- `resetAt` - Unix timestamp when the rate limit resets
+- `limit` - Maximum requests allowed
+- `used` - Number of requests used
+
+## Notes
+
+- Results are automatically sorted by `updated` date in descending order
+- The `is:issue` qualifier is automatically prepended to your search query to exclude pull requests
+- Maximum 100 results per page
+- Page numbers start at 1 (values < 1 are normalized to 1)
+- All timestamps are in ISO 8601 format (UTC)
+- Authentication is required and managed via session cookies
+- The search matches both open and closed issues unless specified otherwise

@@ -1,0 +1,274 @@
+---
+title: "Repository Endpoints"
+description: "API endpoints for managing and retrieving repository data"
+---
+
+## Get Repository Files
+
+Retrieves all files from a GitHub repository.
+
+```bash
+GET /api/repo-files
+```
+
+### Query Parameters
+
+<ParamField query="owner" type="string" required>
+  The repository owner (user or organization)
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  The repository name
+</ParamField>
+
+### Response
+
+<ResponseField name="files" type="string[]">
+  Array of file paths in the repository
+</ResponseField>
+
+<ResponseField name="defaultBranch" type="string">
+  The default branch name (e.g., "main" or "master")
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/repo-files?owner=octocat&repo=Hello-World"
+```
+
+```javascript fetch
+const response = await fetch('/api/repo-files?owner=octocat&repo=Hello-World');
+const data = await response.json();
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "files": [
+    "README.md",
+    "src/index.ts",
+    "src/utils/helper.ts",
+    "package.json"
+  ],
+  "defaultBranch": "main"
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing owner/repo"
+  }
+  ```
+  One or both required query parameters are missing.
+</Expandable>
+
+<Expandable title="404 Not Found">
+  ```json
+  {
+    "error": "Repo not found"
+  }
+  ```
+  The specified repository does not exist or is not accessible.
+</Expandable>
+
+---
+
+## Get Organization Repositories
+
+Retrieves repositories belonging to a GitHub organization.
+
+```bash
+GET /api/org-repos
+```
+
+### Query Parameters
+
+<ParamField query="org" type="string" required>
+  The organization name
+</ParamField>
+
+### Response
+
+<ResponseField name="repos" type="object[]">
+  Array of repository objects
+  
+  <Expandable title="Repository Object">
+    <ResponseField name="name" type="string">
+      Repository name
+    </ResponseField>
+    
+    <ResponseField name="full_name" type="string">
+      Full repository name (org/repo)
+    </ResponseField>
+    
+    <ResponseField name="description" type="string | null">
+      Repository description
+    </ResponseField>
+    
+    <ResponseField name="stargazers_count" type="number">
+      Number of stars
+    </ResponseField>
+    
+    <ResponseField name="private" type="boolean">
+      Whether the repository is private
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/org-repos?org=github"
+```
+
+```javascript fetch
+const response = await fetch('/api/org-repos?org=github');
+const { repos } = await response.json();
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "repos": [
+    {
+      "name": "docs",
+      "full_name": "github/docs",
+      "description": "The open-source repo for docs.github.com",
+      "stargazers_count": 15234,
+      "private": false
+    },
+    {
+      "name": "gitignore",
+      "full_name": "github/gitignore",
+      "description": "A collection of useful .gitignore templates",
+      "stargazers_count": 156789,
+      "private": false
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing org parameter"
+  }
+  ```
+  The org query parameter is required.
+</Expandable>
+
+---
+
+## Get User Repositories
+
+Retrieves repositories for the authenticated user.
+
+```bash
+GET /api/user-repos
+```
+
+### Query Parameters
+
+No query parameters required. This endpoint uses the authenticated user's session.
+
+### Response
+
+<ResponseField name="repos" type="object[]">
+  Array of repository objects
+  
+  <Expandable title="Repository Object">
+    <ResponseField name="id" type="number">
+      Repository ID
+    </ResponseField>
+    
+    <ResponseField name="full_name" type="string">
+      Full repository name (owner/repo)
+    </ResponseField>
+    
+    <ResponseField name="description" type="string | null">
+      Repository description
+    </ResponseField>
+    
+    <ResponseField name="language" type="string | null">
+      Primary programming language
+    </ResponseField>
+    
+    <ResponseField name="stargazers_count" type="number">
+      Number of stars
+    </ResponseField>
+    
+    <ResponseField name="owner" type="object | null">
+      Repository owner information
+      
+      <Expandable title="Owner Object">
+        <ResponseField name="login" type="string">
+          Owner username
+        </ResponseField>
+        
+        <ResponseField name="avatar_url" type="string">
+          Owner avatar URL
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/user-repos" \
+  -H "Cookie: your-session-cookie"
+```
+
+```javascript fetch
+const response = await fetch('/api/user-repos');
+const { repos } = await response.json();
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "repos": [
+    {
+      "id": 123456789,
+      "full_name": "octocat/Hello-World",
+      "description": "My first repository on GitHub!",
+      "language": "JavaScript",
+      "stargazers_count": 42,
+      "owner": {
+        "login": "octocat",
+        "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+      }
+    }
+  ]
+}
+```
+
+## Notes
+
+- All repository endpoints leverage the GitHub API integration defined in `/lib/github.ts`
+- Repositories are sorted by most recently pushed (for org repos) or most recently updated (for user repos)
+- The `/api/org-repos` endpoint fetches up to 100 repositories per request
+- The `/api/user-repos` endpoint fetches up to 100 repositories sorted by update time
+- Authentication is handled via session cookies for user-specific endpoints

@@ -1,0 +1,410 @@
+---
+title: Command Center
+description: Keyboard-first navigation with search, theme switching, and quick actions
+icon: command
+---
+
+## Overview
+
+The Command Center (`⌘K`) is Better Hub's universal command palette for navigating, searching, and performing actions without leaving the keyboard. It's the fastest way to move around Better Hub.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Universal Search" icon="search">
+    Search repos, files, issues, PRs, and users from anywhere
+  </Card>
+  <Card title="Quick Actions" icon="zap">
+    Execute commands without navigating through menus
+  </Card>
+  <Card title="Theme Switching" icon="palette">
+    Change color themes and appearance on the fly
+  </Card>
+  <Card title="Context-Aware" icon="sparkles">
+    Shows relevant commands based on current page
+  </Card>
+</CardGroup>
+
+## Opening the Command Center
+
+### Keyboard Shortcuts
+
+- **`⌘K`** (Mac) or **`Ctrl+K`** (Windows/Linux) - Opens command center in command mode
+- **`⌘/`** or **`/`** alone - Opens in search mode
+- **`⌘G`** or **`T`** (on repo pages) - Opens in file search mode
+- **`Esc`** - Closes the command center
+
+<Note>
+The `/` shortcut only works when you're not in an input field. Use `⌘/` to open search from anywhere.
+</Note>
+
+## Command Center Modes
+
+The command center has several specialized modes:
+
+<Tabs>
+  <Tab title="Commands">
+    **Default mode** - Shows available commands and tools.
+    
+    Displays:
+    - Suggestions (context-aware)
+    - Recently viewed pages
+    - Quick commands
+    - Navigation shortcuts
+    
+    Use for:
+    - Opening Ghost AI
+    - Pinning/unpinning pages
+    - Changing settings
+    - Signing out
+  </Tab>
+  <Tab title="Search">
+    **Repository search** - Find repos across GitHub.
+    
+    Type `⌘/` or press `/` from commands mode.
+    
+    Searches:
+    - Your repositories (instant)
+    - GitHub public repos (debounced)
+    - Organizations you belong to
+    
+    Results show:
+    - Repo name and description
+    - Primary language
+    - Star count
+  </Tab>
+  <Tab title="Files">
+    **File finder** - Navigate repository files.
+    
+    Type `⌘G` or `T` when on a repository page.
+    
+    Searches:
+    - All files in the current repo
+    - Fuzzy matching on filename
+    - Prioritizes filename over path
+    
+    Shows:
+    - Up to 30 matching files
+    - Full file path
+  </Tab>
+  <Tab title="Theme">
+    **Theme picker** - Change your color scheme.
+    
+    Access via: "Change Theme" command.
+    
+    Options:
+    - Light/Dark mode variants
+    - Syntax themes (GitHub, Nord, etc.)
+    - Branded themes (Vercel, Linear)
+    
+    Live preview as you arrow through options.
+  </Tab>
+  <Tab title="Settings">
+    **Configuration** - Adjust app preferences.
+    
+    Access via: "Configuration" command.
+    
+    Includes:
+    - Theme settings
+    - Border radius (UI rounding)
+    - AI model selection  
+    - Account management
+  </Tab>
+</Tabs>
+
+## Contextual Suggestions
+
+The command center shows different suggestions based on your current page:
+
+### On a Repository Page
+
+```
+Suggestions:
+  📄 Go to File (⌘G)
+  🔵 Issues → Browse issues
+  🟢 Pull Requests → Browse pull requests
+```
+
+### On Dashboard / Home
+
+```
+Suggestions:
+  🔍 Search Repos (⌘/)
+  👻 Open Ghost (⌘I)
+  📁 Recently viewed repos
+```
+
+### On a PR or Issue
+
+```
+Suggestions:
+  📌 Pin this page
+  👻 Open Ghost (⌘I)
+```
+
+<Tip>
+Suggestions appear first in the list, so you can press `Enter` immediately without typing to select the top suggestion.
+</Tip>
+
+## Navigation Commands
+
+Quickly jump to any section:
+
+| Command | Destination |
+|---------|-------------|
+| Dashboard | Your personal dashboard |
+| Repositories | Repo listing page |
+| PRs | Your pull requests across all repos |
+| Search Code | Code search interface |
+| Starred Repos | Repos you've starred |
+| Notifications | GitHub notifications |
+
+## Pinning Pages
+
+Pin important pages to repository overviews:
+
+### How to Pin
+
+1. Navigate to a PR, issue, or any repo sub-page
+2. Press `⌘K`
+3. Select **"Pin this page"** (appears when on a pinnable page)
+4. The item is added to the repository overview
+
+### What Gets Pinned
+
+- Pull requests (#123)
+- Issues (#456)  
+- Commits (abc1234)
+- Actions workflows
+- Security advisories
+- Any other repo page
+
+### Unpinning
+
+On a pinned page:
+1. Press `⌘K`
+2. Select **"Unpin this page"**
+3. Item is removed from overview
+
+<Note>
+Pinned items are personal to your account and synchronized across devices.
+</Note>
+
+## Theme Customization
+
+Change your visual appearance through the command center:
+
+### Selecting a Theme
+
+1. Press `⌘K`
+2. Type "theme" or select **"Change Theme"**
+3. Arrow through available themes
+4. Press `Enter` to apply
+
+### Available Themes
+
+**Regular Themes:**
+- GitHub Light / Dark
+- Nord
+- Night Owl  
+- Contrast (High contrast)
+
+**Branded Themes:**
+- Vercel (Vercel-inspired palette)
+- Linear (Linear-inspired palette)
+
+<Accordion title="How do themes affect syntax highlighting?">
+Themes control both the UI colors and code syntax highlighting. When you switch to "Nord", for example, your code blocks will use Nord's color palette.
+</Accordion>
+
+### Border Radius
+
+Adjust UI roundness:
+
+1. `⌘K` → "Set Border Radius"
+2. Choose:
+   - **Default**: Sharp corners (0px)
+   - **Small**: Subtle rounding (4px)
+   - **Medium**: Balanced (8px)  
+   - **Large**: Soft & rounded (12px)
+3. Changes apply immediately
+
+## Account Management
+
+Switch GitHub accounts or add PAT (Personal Access Token) accounts:
+
+### Switching Accounts
+
+1. Press `⌘K`
+2. Select **"Account Settings"**
+3. Click the account you want to activate
+4. Better Hub reloads with the new account
+
+### Adding a PAT Account
+
+Use multiple GitHub accounts simultaneously:
+
+1. `⌘K` → "Account Settings" → "Add Account"
+2. Paste your GitHub Personal Access Token
+3. The account appears in the switcher
+4. Toggle between OAuth account and PAT accounts
+
+<Tip>
+PAT accounts are useful for managing work and personal GitHub accounts without logging out.
+</Tip>
+
+## Search Behavior
+
+### Repository Search
+
+Searches happen in two phases:
+
+1. **Instant** - Your repos are searched immediately (cached locally)
+2. **Debounced** - After 150ms, GitHub API is queried for public repos
+
+Results are deduplicated (your repos appear first).
+
+### File Search
+
+File search uses fuzzy matching:
+
+```
+Query: "auth srv"
+Matches:
+  ✅ src/auth/service.ts (filename exact)
+  ✅ src/auth/AuthService.ts (filename partial)  
+  ✅ lib/authentication/server.ts (path contains)
+```
+
+**Scoring:**
+- Exact filename match: Highest priority
+- Filename contains query: Medium priority  
+- Path contains query: Lower priority
+
+## Recently Viewed
+
+The command center shows your last 5 viewed items:
+
+- Repository pages
+- Pull requests
+- Issues  
+- User profiles
+- Commits
+
+Each shows:
+- Icon (based on type)
+- Title  
+- Subtitle (repo or context)
+- Timestamp
+
+<Note>
+Recently viewed items refresh whenever you open the command center, so they're always current.
+</Note>
+
+## Keyboard Navigation
+
+Efficient navigation without the mouse:
+
+| Key | Action |
+|-----|--------|
+| `↓` | Select next item |
+| `↑` | Select previous item |
+| `Enter` | Execute selected command |
+| `Tab` | Cycle modes (commands → search → theme → ...) |
+| `Backspace` (on empty) | Go back to commands mode |
+| `Esc` | Close command center |
+
+<Tip>
+The command center remembers your selection position, so you can press `↓` a few times, cancel with `Esc`, and when you reopen with `⌘K`, you're still on the same item.
+</Tip>
+
+## Mode Switching
+
+### With Tab Key
+
+Press `Tab` to cycle through modes:
+```
+Commands → Search → Theme → Radius → Accounts → Settings → Commands
+```
+
+### With Shortcuts
+
+- `/` in commands mode → Switches to search
+- `Backspace` on empty input → Goes back to commands
+
+### Visual Indicators
+
+Each mode has a unique icon in the search bar:
+- 🔍 Search mode
+- 📄 File finder  
+- 🎨 Theme picker
+- ⚙️ Settings
+
+## Advanced Features
+
+### Pin from Current Page
+
+When on a PR/issue:
+```
+⌘K → Pin this page → Enter
+```
+Adds to repo overview instantly.
+
+### Preview Public View
+
+On your own repo overview:
+```
+⌘K → Preview Public View → Enter
+```
+Switches to visitor mode (README only).
+
+### Open External Links
+
+```
+⌘K → Open GitHub → Enter
+```
+Opens github.com in a new tab.
+
+```  
+⌘K → New Repository → Enter
+```
+Opens GitHub's repo creation page.
+
+## Best Practices
+
+<Tip>
+**Learn the shortcuts**: `⌘K` for commands, `⌘/` for search, `⌘G` for files. They're muscle memory after a few uses.
+</Tip>
+
+<Tip>
+**Use fuzzy search**: In file finder, type abbreviated terms like "comp hdr" to find "components/Header.tsx".
+</Tip>
+
+<Tip>
+**Pin strategically**: Pin 3-5 items max per repo. More than that gets cluttered.
+</Tip>
+
+<Tip>
+**Explore with Tab**: Press Tab to discover all the modes. You might find features you didn't know existed.
+</Tip>
+
+## Troubleshooting
+
+<Accordion title="Command center doesn't open">
+Check if you're in an input field. Press `Esc` first to blur the input, then try `⌘K` again.
+</Accordion>
+
+<Accordion title="Search results are empty">
+Ensure you have network connectivity. Repository search queries the GitHub API. Try searching one of your own repos by exact name.
+</Accordion>
+
+<Accordion title="File search shows no results">
+File search only works on repository pages. Make sure you're viewing a repo (not dashboard or settings).
+</Accordion>
+
+## Related Features
+
+- [Ghost AI](/features/ghost-ai) - Open Ghost from command center
+- [Repository Overview](/features/repository-overview) - Pin items to overview
+- [Keyboard Shortcuts](/features/keyboard-shortcuts) - All shortcuts reference
+- [Pull Requests](/features/pull-requests) - Navigate to PRs quickly

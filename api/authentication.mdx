@@ -1,0 +1,429 @@
+---
+title: 'Authentication'
+description: 'How to authenticate API requests to Better Hub'
+---
+
+## Overview
+
+Better Hub uses **session-based authentication** powered by [Better Auth](https://www.better-auth.com/). All authenticated API requests require a valid session cookie.
+
+There are two ways to authenticate:
+
+1. **GitHub OAuth** - Standard OAuth flow (recommended for web apps)
+2. **Personal Access Token (PAT)** - Sign in with a GitHub PAT (useful for scripts and CLI tools)
+
+## Authentication Methods
+
+### GitHub OAuth (Recommended)
+
+The standard authentication flow uses GitHub OAuth with configurable scopes.
+
+<Steps>
+  <Step title="Initiate OAuth">
+    Redirect users to the Better Auth OAuth endpoint:
+    
+    ```bash
+    GET /api/auth/sign-in/social
+    ```
+    
+    The OAuth flow will redirect to GitHub for authorization.
+  </Step>
+  
+  <Step title="User Authorizes">
+    Users authorize Better Hub to access their GitHub account with these default scopes:
+    - `read:user` - Read user profile data
+    - `user:email` - Access user email addresses
+    - `public_repo` - Access public repositories
+    
+    <Note>
+      Users can grant additional scopes during sign-in for extended permissions (private repos, etc.)
+    </Note>
+  </Step>
+  
+  <Step title="Session Created">
+    After successful authorization, Better Auth creates a session and sets a session cookie.
+    
+    The session is stored in the `session` table in PostgreSQL:
+    
+    <ResponseField name="id" type="string">
+      Unique session identifier
+    </ResponseField>
+    
+    <ResponseField name="token" type="string">
+      Unique session token
+    </ResponseField>
+    
+    <ResponseField name="userId" type="string">
+      Associated user ID
+    </ResponseField>
+    
+    <ResponseField name="expiresAt" type="DateTime">
+      Session expiration timestamp
+    </ResponseField>
+    
+    <ResponseField name="ipAddress" type="string" optional>
+      IP address of the session
+    </ResponseField>
+    
+    <ResponseField name="userAgent" type="string" optional>
+      Browser user agent string
+    </ResponseField>
+  </Step>
+  
+  <Step title="Make Authenticated Requests">
+    All subsequent API requests automatically include the session cookie.
+  </Step>
+</Steps>
+
+### Personal Access Token (PAT)
+
+For scripts, CLI tools, or testing, you can authenticate using a GitHub Personal Access Token.
+
+<Note>
+  PAT authentication creates a session just like OAuth. The PAT is encrypted and stored in the `Account` table.
+</Note>
+
+#### Create a GitHub PAT
+
+1. Go to GitHub Settings → Developer settings → Personal access tokens
+2. Generate a new token (classic) with these scopes:
+   - `read:user`
+   - `user:email`
+   - `public_repo` (or `repo` for private repositories)
+
+#### Sign In with PAT
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://www.better-hub.com/api/auth/pat-signin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pat": "ghp_your_github_token_here"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://www.better-hub.com/api/auth/pat-signin', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    pat: 'ghp_your_github_token_here'
+  }),
+  credentials: 'include' // Important: include cookies
+});
+
+const data = await response.json();
+console.log(data); // { success: true }
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://www.better-hub.com/api/auth/pat-signin',
+    json={'pat': 'ghp_your_github_token_here'}
+)
+
+print(response.json())  # {'success': True}
+```
+</CodeGroup>
+
+**Endpoint**: `POST /api/auth/pat-signin`
+
+**Request Body**:
+<ResponseField name="pat" type="string" required>
+  GitHub Personal Access Token
+</ResponseField>
+
+**Response**:
+```json
+{
+  "success": true
+}
+```
+
+**Rate Limit**: 5 requests per minute per IP
+
+<Warning>
+  Never commit your GitHub PAT to version control. Use environment variables or secure secret management.
+</Warning>
+
+#### How PAT Authentication Works
+
+1. Better Hub validates the PAT against GitHub's API
+2. Retrieves the authenticated user's profile
+3. Creates or updates the user in the database
+4. Encrypts the PAT using AES symmetric encryption
+5. Stores the encrypted PAT in the `Account` table
+6. Creates a session and sets a session cookie
+
+The PAT is stored encrypted and used for subsequent GitHub API calls on your behalf.
+
+## Session Management
+
+### Session Storage
+
+Sessions are stored in two places:
+
+1. **Database** - PostgreSQL `session` table for persistence
+2. **Cookie Cache** - JWE-encrypted cookie for performance
+
+**Cookie Configuration**:
+- **Name**: Set by Better Auth (typically `better-auth.session_token`)
+- **Max Age**: 7 days (604,800 seconds)
+- **Strategy**: JWE (JSON Web Encryption)
+- **Secure**: True in production
+- **HttpOnly**: True (prevents XSS attacks)
+- **SameSite**: Lax
+
+### Check Session Status
+
+To verify if a session is active:
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://www.better-hub.com/api/auth/session \
+  -H "Cookie: better-auth.session_token=your_cookie_value"
+```
+
+```javascript JavaScript
+const response = await fetch('https://www.better-hub.com/api/auth/session', {
+  credentials: 'include'
+});
+
+const session = await response.json();
+console.log(session);
+```
+</CodeGroup>
+
+**Response** (if authenticated):
+```json
+{
+  "session": {
+    "id": "session_abc123",
+    "userId": "user_xyz789",
+    "expiresAt": "2026-03-10T12:00:00.000Z"
+  },
+  "user": {
+    "id": "user_xyz789",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "image": "https://github.com/avatars/..."
+  }
+}
+```
+
+**Response** (if not authenticated):
+```json
+null
+```
+
+### Sign Out
+
+To end a session:
+
+```bash
+POST /api/auth/sign-out
+```
+
+This will invalidate the session and clear the session cookie.
+
+## Making Authenticated Requests
+
+Once authenticated, include the session cookie with every API request.
+
+### Browser Requests
+
+When making requests from a browser, cookies are included automatically:
+
+```javascript
+const response = await fetch('/api/user-settings', {
+  credentials: 'include' // Ensures cookies are sent
+});
+```
+
+### Server-Side Requests
+
+For server-side or script-based requests, you need to manage cookies manually:
+
+<CodeGroup>
+```bash cURL
+# Save cookies during PAT sign-in
+curl -X POST https://www.better-hub.com/api/auth/pat-signin \
+  -H "Content-Type: application/json" \
+  -d '{"pat": "ghp_token"}' \
+  -c cookies.txt
+
+# Use saved cookies in subsequent requests
+curl -X GET https://www.better-hub.com/api/user-settings \
+  -b cookies.txt
+```
+
+```python Python with requests
+import requests
+
+# Create a session to persist cookies
+session = requests.Session()
+
+# Sign in with PAT
+response = session.post(
+    'https://www.better-hub.com/api/auth/pat-signin',
+    json={'pat': 'ghp_your_token'}
+)
+
+# Session cookies are automatically stored
+# Make authenticated requests
+user_settings = session.get('https://www.better-hub.com/api/user-settings')
+print(user_settings.json())
+```
+
+```javascript Node.js with fetch
+import fetch from 'node-fetch';
+
+let sessionCookie;
+
+// Sign in with PAT
+const signInResponse = await fetch('https://www.better-hub.com/api/auth/pat-signin', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ pat: 'ghp_your_token' })
+});
+
+// Extract session cookie
+const cookies = signInResponse.headers.get('set-cookie');
+sessionCookie = cookies.split(';')[0];
+
+// Use cookie in subsequent requests
+const settingsResponse = await fetch('https://www.better-hub.com/api/user-settings', {
+  headers: { 'Cookie': sessionCookie }
+});
+
+const settings = await settingsResponse.json();
+console.log(settings);
+```
+</CodeGroup>
+
+## Authorization Headers
+
+Better Hub uses **session cookies** for authentication, not `Authorization` headers. This is different from many REST APIs that use Bearer tokens.
+
+<Warning>
+  Do NOT use `Authorization: Bearer <token>` headers. Better Hub authenticates requests via session cookies only.
+</Warning>
+
+## Error Responses
+
+Authentication errors return these status codes:
+
+### 401 Unauthorized
+
+The request lacks valid authentication credentials.
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+**Causes**:
+- No session cookie provided
+- Session expired
+- Invalid session token
+
+**Solution**: Sign in again via OAuth or PAT
+
+### 403 Forbidden
+
+The authenticated user lacks permission for the requested resource.
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+**Causes**:
+- Insufficient GitHub scopes
+- Access denied by GitHub
+- User banned or restricted
+
+**Solution**: Re-authenticate with additional scopes or check permissions
+
+## GitHub Token Management
+
+### OAuth Token Storage
+
+GitHub OAuth access tokens are:
+- **Encrypted** using AES symmetric encryption
+- **Stored** in the `Account` table's `accessToken` field
+- **Automatically refreshed** when expired (if refresh token available)
+
+### Token Scopes
+
+The user's current GitHub scopes can be checked via:
+
+```bash
+GET /api/user-scopes
+```
+
+**Response**:
+```json
+{
+  "scopes": ["read:user", "user:email", "public_repo"]
+}
+```
+
+If a user needs additional scopes, they must re-authenticate through the OAuth flow.
+
+### Account Updates
+
+Better Hub is configured with `updateAccountOnSignIn: true`, which means:
+- Scopes are updated on each sign-in
+- Access tokens are refreshed automatically
+- Account information stays in sync with GitHub
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use HTTPS" icon="lock">
+    Always use HTTPS in production to prevent session hijacking
+  </Card>
+  
+  <Card title="Secure Cookies" icon="shield">
+    Session cookies are HttpOnly and Secure in production
+  </Card>
+  
+  <Card title="Rotate PATs" icon="rotate">
+    Regularly rotate Personal Access Tokens
+  </Card>
+  
+  <Card title="Minimal Scopes" icon="key">
+    Only request GitHub scopes you actually need
+  </Card>
+</CardGroup>
+
+<Note>
+  **Session Impersonation**: Better Hub includes an admin impersonation feature (via the `admin` plugin). Impersonated sessions have the `impersonatedBy` field set in the database.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="User Settings API" icon="gear">
+    Manage user preferences and settings
+  </Card>
+  
+  <Card title="GitHub Data API" icon="github">
+    Access repositories, issues, and PRs
+  </Card>
+  
+  <Card title="AI Features" icon="brain">
+    Use AI-powered GitHub assistance
+  </Card>
+  
+  <Card title="Billing API" icon="credit-card">
+    Check credits and usage limits
+  </Card>
+</CardGroup>

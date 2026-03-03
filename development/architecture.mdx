@@ -1,0 +1,375 @@
+---
+title: Technical Architecture
+description: Understanding Better Hub's monorepo structure, tech stack, and key components
+icon: building
+---
+
+Better Hub is a modern web application built with Next.js, designed as a monorepo to support multiple apps and shared packages.
+
+## Monorepo Structure
+
+The project uses a **monorepo** managed with **pnpm workspaces**:
+
+```
+better-hub/
+├── apps/
+│   └── web/                 # Main Next.js application
+├── packages/
+│   ├── chrome-extension/    # Chrome browser extension
+│   └── firefox-extension/   # Firefox browser extension
+├── package.json             # Root workspace config
+└── pnpm-workspace.yaml      # Workspace definitions
+```
+
+### Apps
+
+<Accordion title="apps/web - Main Application">
+  The primary Next.js application that powers Better Hub. This is where most development happens.
+
+  **Key directories:**
+  - `src/app/` - Next.js App Router pages and API routes
+  - `src/components/` - React components
+  - `src/lib/` - Shared utilities, auth, database, GitHub API
+  - `prisma/` - Database schema and migrations
+
+  **Tech stack:**
+  - Next.js 16 (App Router)
+  - React 19
+  - TypeScript 5.7
+  - Tailwind CSS 4
+</Accordion>
+
+<Accordion title="packages/chrome-extension">
+  Browser extension that adds "Open in Better Hub" buttons to GitHub pages. Built as a separate package to allow independent deployment.
+</Accordion>
+
+<Accordion title="packages/firefox-extension">
+  Firefox-compatible version of the browser extension, with Firefox-specific manifest and APIs.
+</Accordion>
+
+## Tech Stack
+
+### Frontend
+
+- **[Next.js 16](https://nextjs.org/)** - React framework with App Router
+- **[React 19](https://react.dev/)** - UI library
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
+- **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[Radix UI](https://www.radix-ui.com/)** - Headless UI components
+- **[TanStack Query](https://tanstack.com/query)** - Data fetching and caching
+- **[Motion](https://motion.dev/)** - Animation library
+- **[Tiptap](https://tiptap.dev/)** - Rich text editor for comments
+
+### Backend
+
+- **[Better Auth](https://better-auth.com/)** - Authentication library with GitHub OAuth
+- **[Prisma](https://www.prisma.io/)** - Database ORM and migrations
+- **[PostgreSQL](https://www.postgresql.org/)** - Primary database
+- **[Upstash Redis](https://upstash.com/)** - Caching layer
+- **[Octokit](https://github.com/octokit/rest.js)** - GitHub API client
+
+### AI & ML
+
+- **[Vercel AI SDK](https://sdk.vercel.ai/)** - AI integration framework
+- **[Anthropic Claude](https://www.anthropic.com/)** - AI model for Ghost assistant
+- **[OpenRouter](https://openrouter.ai/)** - AI model routing and management
+- **[Mixedbread AI](https://mixedbread.ai/)** - Embeddings for semantic search
+- **[E2B](https://e2b.dev/)** - Code execution sandboxes
+
+### Infrastructure
+
+- **[Vercel](https://vercel.com/)** - Hosting and deployment
+- **[Sentry](https://sentry.io/)** - Error tracking and monitoring
+- **[Stripe](https://stripe.com/)** - Payments and subscriptions
+- **[Inngest](https://www.inngest.com/)** - Background job processing
+- **[AWS S3](https://aws.amazon.com/s3/)** - File storage
+
+### Development Tools
+
+- **[oxlint](https://oxc-project.github.io/)** - Fast JavaScript/TypeScript linter
+- **[oxfmt](https://oxc-project.github.io/)** - Code formatter
+- **[Bun](https://bun.sh/)** - Package manager and task runner
+- **[Docker Compose](https://docs.docker.com/compose/)** - Local PostgreSQL setup
+
+## Application Architecture
+
+### Directory Structure
+
+The main application (`apps/web/src/`) is organized as follows:
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (app)/             # Main app routes (requires auth)
+│   │   ├── [owner]/       # Repository owner pages
+│   │   ├── dashboard/     # User dashboard
+│   │   ├── issues/        # Issue browsing
+│   │   ├── pulls/         # PR browsing
+│   │   └── ...
+│   ├── api/               # API routes
+│   │   ├── auth/          # Better Auth endpoints
+│   │   ├── ai/            # Ghost AI endpoints
+│   │   ├── billing/       # Stripe integration
+│   │   └── ...
+│   └── debug/             # Debug utilities
+├── components/            # React components
+│   ├── dashboard/         # Dashboard components
+│   ├── issue/             # Issue detail components
+│   ├── pull/              # PR detail components
+│   ├── repo/              # Repository components
+│   └── ui/                # Shared UI components
+├── lib/                   # Core utilities and services
+│   ├── auth.ts            # Better Auth configuration
+│   ├── db.ts              # Prisma client
+│   ├── github.ts          # GitHub API client
+│   ├── billing/           # Stripe integration
+│   └── ...
+└── hooks/                 # React hooks
+```
+
+### Key Components
+
+<Accordion title="Authentication (lib/auth.ts)">
+  Better Hub uses **[Better Auth](https://better-auth.com/)** for authentication:
+
+  - GitHub OAuth with customizable scopes
+  - Encrypted OAuth token storage
+  - Session caching in cookies (JWE)
+  - Activity tracking and rate limiting
+  - Stripe customer creation on signup
+  - Admin plugin for user management
+
+  **Key features:**
+  - Minimal default scopes (`read:user`, `user:email`, `public_repo`)
+  - Users can opt into additional scopes via UI
+  - PAT (Personal Access Token) sign-in support
+  - Automatic GitHub user data caching
+</Accordion>
+
+<Accordion title="Database (Prisma)">
+  **Prisma** manages the database schema and migrations:
+
+  **Location:** `apps/web/prisma/schema.prisma`
+
+  **Key models:**
+  - User, Session, Account (Better Auth)
+  - Subscription, Customer (Stripe billing)
+  - Custom user fields (GitHub PAT, onboarding state)
+
+  **Common commands:**
+  ```bash
+  cd apps/web
+  
+  # Create a migration
+  npx prisma migrate dev --name add_new_field
+  
+  # Generate Prisma client
+  npx prisma generate
+  
+  # Open Prisma Studio (DB GUI)
+  npx prisma studio
+  ```
+</Accordion>
+
+<Accordion title="GitHub Integration (lib/github.ts)">
+  The GitHub client (`lib/github.ts`) provides a comprehensive API wrapper:
+
+  - Repository management (list, get, search)
+  - Pull request operations (list, get, create, merge)
+  - Issue tracking (list, get, create, update)
+  - Code navigation (file tree, file content, search)
+  - CI/CD status (workflow runs, checks)
+  - Security (advisories, vulnerabilities)
+  
+  **Rate limiting:**
+  - Uses GitHub's GraphQL API where possible (more efficient)
+  - Caches responses in Redis (Upstash)
+  - Implements exponential backoff for retries
+
+  **Authentication:**
+  - Uses OAuth tokens from Better Auth
+  - Supports GitHub PAT for enhanced permissions
+  - Automatically refreshes tokens when needed
+</Accordion>
+
+<Accordion title="AI Integration (Ghost)">
+  **Ghost** is Better Hub's AI assistant, powered by multiple AI services:
+
+  **Core files:**
+  - `app/api/ai/` - AI API endpoints
+  - `lib/ai-auth.ts` - AI-specific authentication
+  - `lib/chat-store.ts` - Conversation state management
+  - `lib/embedding-store.ts` - Vector storage for semantic search
+
+  **Features:**
+  - PR review and summaries
+  - Code navigation and explanation
+  - Issue triage and labeling
+  - Commit message generation
+  - Natural language code search
+
+  **AI Models:**
+  - Anthropic Claude (primary reasoning)
+  - OpenRouter (model routing)
+  - Mixedbread AI (embeddings)
+  - E2B (code execution)
+
+  **Keyboard shortcut:** `⌘I` (or `Ctrl+I`) to toggle Ghost
+</Accordion>
+
+<Accordion title="Billing (Stripe)">
+  Stripe integration for subscriptions and metered usage:
+
+  **Location:** `lib/billing/`
+
+  **Features:**
+  - Subscription plans (base tier)
+  - Metered billing for AI usage
+  - Credit system for new users
+  - Automatic customer creation on signup
+  - Webhook handling for subscription events
+
+  **Better Auth integration:**
+  - Uses `@better-auth/stripe` plugin
+  - Syncs user data with Stripe customers
+  - Stores subscription status in database
+</Accordion>
+
+<Accordion title="Background Jobs (Inngest)">
+  **Inngest** handles asynchronous tasks:
+
+  **Location:** `lib/inngest.ts`, `app/api/inngest/`
+
+  **Use cases:**
+  - Repository data syncing
+  - Embedding generation for search
+  - Scheduled cleanup tasks
+  - Webhook processing
+
+  **Benefits:**
+  - Automatic retries with exponential backoff
+  - Event-driven architecture
+  - Built-in observability
+</Accordion>
+
+<Accordion title="Caching Strategy">
+  Better Hub uses multiple caching layers:
+
+  **1. Redis (Upstash)**
+  - GitHub API responses
+  - User session data
+  - Repository metadata
+  - README content
+
+  **2. React Query**
+  - Client-side data fetching
+  - Automatic background refetching
+  - Optimistic updates
+
+  **3. Next.js**
+  - Static page generation
+  - Incremental Static Regeneration (ISR)
+  - Route caching
+
+  **4. Better Auth**
+  - Session cookie caching (7 days)
+  - Account data caching
+</Accordion>
+
+## Data Flow
+
+Typical request flow for viewing a pull request:
+
+<Steps>
+  <Step title="User navigates to PR page">
+    User visits `/better-auth/better-hub/pull/123`
+  </Step>
+
+  <Step title="Authentication check">
+    Next.js middleware validates session via Better Auth. If invalid, redirects to login.
+  </Step>
+
+  <Step title="Server component renders">
+    Page component (`app/(app)/[owner]/[repo]/pull/[number]/page.tsx`) fetches initial data server-side.
+  </Step>
+
+  <Step title="GitHub API request">
+    `lib/github.ts` client fetches PR data using cached OAuth token. Checks Redis cache first.
+  </Step>
+
+  <Step title="Database queries">
+    Prisma fetches related data (user preferences, pinned items, etc.)
+  </Step>
+
+  <Step title="Response rendered">
+    Server component returns HTML with initial data. Client hydrates with React.
+  </Step>
+
+  <Step title="Client-side updates">
+    TanStack Query manages subsequent data fetching, caching, and real-time updates.
+  </Step>
+</Steps>
+
+## Development Patterns
+
+### Server vs Client Components
+
+Better Hub uses Next.js App Router with a clear separation:
+
+**Server Components (default):**
+- Page layouts and initial data fetching
+- Authentication checks
+- Database queries
+- GitHub API calls
+
+**Client Components (`'use client'`):**
+- Interactive UI (buttons, forms, modals)
+- State management (React hooks)
+- Real-time updates (TanStack Query)
+- Keyboard shortcuts
+
+### API Routes
+
+API routes (`app/api/`) handle:
+- GitHub proxy endpoints (avoid CORS)
+- AI streaming responses
+- Webhook receivers (Stripe, GitHub)
+- File uploads (S3/R2)
+
+**Pattern:**
+```typescript
+// app/api/example/route.ts
+export async function GET(request: Request) {
+  const session = await getServerSession();
+  if (!session) return new Response('Unauthorized', { status: 401 });
+  
+  // Your logic here
+  
+  return Response.json({ data });
+}
+```
+
+### Type Safety
+
+Strict TypeScript throughout:
+- No `any` types in production code
+- Prisma generates database types
+- Zod for runtime validation
+- GitHub API types from Octokit
+
+## Performance Considerations
+
+- **Code splitting**: Next.js automatically splits routes
+- **Image optimization**: Next.js Image component for GitHub avatars
+- **Lazy loading**: Dynamic imports for heavy components
+- **React Compiler**: Automatic memoization (Babel plugin)
+- **Streaming**: Server-side streaming for AI responses
+
+## Next Steps
+
+Now that you understand the architecture:
+
+- Review the [Setup Guide](/development/setup) to get started
+- Read the [Contributing Guidelines](/development/contributing) for workflow details
+- Explore the codebase with this knowledge in mind
+- Ask questions in GitHub Discussions if anything is unclear

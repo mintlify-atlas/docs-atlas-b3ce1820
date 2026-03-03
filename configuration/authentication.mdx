@@ -1,0 +1,417 @@
+---
+title: Authentication
+description: Configure GitHub OAuth and Better Auth for user authentication
+---
+
+Better Hub uses [Better Auth](https://better-auth.com) with GitHub OAuth for authentication. Users sign in with their GitHub account to access the platform.
+
+## GitHub OAuth Setup
+
+### Create a GitHub OAuth App
+
+<Steps>
+  <Step title="Navigate to GitHub Developer Settings">
+    Go to [GitHub Settings > Developer Settings > OAuth Apps](https://github.com/settings/developers) and click **New OAuth App**.
+  </Step>
+  
+  <Step title="Configure the OAuth App">
+    Fill in the application details:
+    
+    - **Application name**: `Better Hub (Development)` or your app name
+    - **Homepage URL**: `http://localhost:3000` (development) or your production URL
+    - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+    
+    For production, use your production domain:
+    ```
+    https://yourdomain.com/api/auth/callback/github
+    ```
+  </Step>
+  
+  <Step title="Get your credentials">
+    After creating the app, copy the **Client ID** and generate a **Client Secret**.
+  </Step>
+  
+  <Step title="Add to environment variables">
+    Add the credentials to your `.env` file:
+    
+    ```bash
+    GITHUB_CLIENT_ID=your_client_id_here
+    GITHUB_CLIENT_SECRET=your_client_secret_here
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Create separate OAuth Apps for development and production environments. Never use production credentials in development.
+</Warning>
+
+### GitHub Scopes
+
+Better Hub requests minimal permissions by default and allows users to grant additional scopes as needed:
+
+**Default scopes** (required on sign-in):
+- `read:user` - Read user profile information
+- `user:email` - Access user email addresses
+- `public_repo` - Access public repositories
+
+**Additional scopes** (optional, requested per-feature):
+- `repo` - Full repository access (for private repos)
+- `workflow` - GitHub Actions workflow permissions
+
+Scopes are configured in `apps/web/src/lib/auth.ts:108`.
+
+---
+
+## Better Auth Configuration
+
+### Generate Auth Secret
+
+Better Auth requires a secret for encrypting sessions and tokens:
+
+```bash
+openssl rand -hex 16
+```
+
+Add this to your `.env` file:
+
+```bash
+BETTER_AUTH_SECRET=your_generated_secret_here
+```
+
+<Warning>
+  The `BETTER_AUTH_SECRET` must be:
+  - At least 32 characters long
+  - Cryptographically random
+  - Different in each environment
+  - Never committed to version control
+</Warning>
+
+### Application URLs
+
+Set the base URL for your application:
+
+<CodeGroup>
+```bash Development
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+```bash Production
+BETTER_AUTH_URL=https://yourdomain.com
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
+</CodeGroup>
+
+These URLs must match the OAuth callback URL configured in GitHub.
+
+---
+
+## Auth Configuration Details
+
+Better Hub's authentication is configured in `apps/web/src/lib/auth.ts`. Key features:
+
+### Database Adapter
+
+Better Auth uses Prisma with PostgreSQL:
+
+```typescript
+database: prismaAdapter(prisma, {
+  provider: "postgresql",
+})
+```
+
+### Plugins Enabled
+
+<ParamField path="dash" type="plugin">
+  Activity tracking and analytics dashboard
+</ParamField>
+
+<ParamField path="sentinel" type="plugin">
+  Security monitoring and rate limiting
+</ParamField>
+
+<ParamField path="admin" type="plugin">
+  Admin user management and impersonation
+</ParamField>
+
+<ParamField path="stripe" type="plugin">
+  Payment and subscription management (optional, enabled when Stripe is configured)
+</ParamField>
+
+<ParamField path="oAuthProxy" type="plugin">
+  OAuth proxy for Vercel preview deployments
+</ParamField>
+
+<ParamField path="patSignIn" type="plugin">
+  Custom plugin for GitHub Personal Access Token authentication
+</ParamField>
+
+### Session Configuration
+
+Sessions are cached in encrypted cookies for performance:
+
+```typescript
+session: {
+  cookieCache: {
+    enabled: true,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    strategy: "jwe", // JSON Web Encryption
+  },
+}
+```
+
+### OAuth Token Encryption
+
+GitHub OAuth tokens are encrypted before storage:
+
+```typescript
+account: {
+  encryptOAuthTokens: true,
+  storeAccountCookie: true,
+  updateAccountOnSignIn: true, // Refreshes scopes
+}
+```
+
+### Trusted Origins
+
+CORS is configured for these origins:
+
+- `https://www.better-hub.com` (production)
+- `https://better-hub-*-better-auth.vercel.app` (Vercel previews)
+- `https://beta.better-hub.com` (beta environment)
+
+Configure additional origins in `apps/web/src/lib/auth.ts:123`.
+
+---
+
+## User Model
+
+Better Auth extends the base user model with custom fields:
+
+<ParamField path="githubPat" type="string">
+  GitHub Personal Access Token (optional, for additional API access)
+</ParamField>
+
+<ParamField path="onboardingDone" type="boolean" default={false}>
+  Tracks whether user has completed onboarding flow
+</ParamField>
+
+Full user schema is defined in `apps/web/prisma/schema.prisma:11-39`.
+
+---
+
+## Session Management
+
+### Server-Side Session Access
+
+Use `getServerSession()` to access the session in server components and API routes:
+
+```typescript
+import { getServerSession } from "@/lib/auth";
+
+export default async function Page() {
+  const session = await getServerSession();
+  
+  if (!session) {
+    return <div>Not authenticated</div>;
+  }
+  
+  return <div>Welcome, {session.user.name}</div>;
+}
+```
+
+### Session Data Structure
+
+The session object includes:
+
+```typescript
+{
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string;
+    githubPat?: string;
+    onboardingDone: boolean;
+  },
+  session: {
+    id: string;
+    expiresAt: Date;
+    userId: string;
+  },
+  githubUser: {
+    login: string;
+    accessToken: string;
+    // ...other GitHub user data
+  }
+}
+```
+
+### GitHub API Integration
+
+The session automatically includes GitHub user data and access token, cached in Redis for 1 hour:
+
+```typescript
+const cached = await redis.get(`github_user:${token}`);
+```
+
+See implementation in `apps/web/src/lib/auth.ts:18-28`.
+
+---
+
+## Multi-Environment Setup
+
+### Development
+
+<Steps>
+  <Step title="Create development OAuth App">
+    Create a GitHub OAuth App with callback URL: `http://localhost:3000/api/auth/callback/github`
+  </Step>
+  
+  <Step title="Configure .env">
+    ```bash
+    GITHUB_CLIENT_ID=dev_client_id
+    GITHUB_CLIENT_SECRET=dev_client_secret
+    BETTER_AUTH_SECRET=$(openssl rand -hex 16)
+    BETTER_AUTH_URL=http://localhost:3000
+    NEXT_PUBLIC_APP_URL=http://localhost:3000
+    ```
+  </Step>
+</Steps>
+
+### Staging/Preview
+
+For Vercel preview deployments, use the OAuth proxy:
+
+```typescript
+...(process.env.VERCEL
+  ? [oAuthProxy({ productionURL: "https://www.better-hub.com" })]
+  : []),
+```
+
+This proxies OAuth through production, so preview deployments use production OAuth credentials.
+
+### Production
+
+<Steps>
+  <Step title="Create production OAuth App">
+    Create a separate GitHub OAuth App with your production domain callback URL
+  </Step>
+  
+  <Step title="Set production environment variables">
+    Configure variables in your hosting platform (Vercel, Railway, etc.)
+  </Step>
+  
+  <Step title="Verify trusted origins">
+    Ensure your production domain is in the `trustedOrigins` array
+  </Step>
+</Steps>
+
+---
+
+## Security Best Practices
+
+<Warning>
+  **Critical security requirements:**
+  
+  1. Never commit `.env` files to version control
+  2. Use different OAuth apps per environment
+  3. Rotate secrets regularly
+  4. Enable 2FA on GitHub accounts with OAuth apps
+  5. Monitor failed authentication attempts via Sentinel plugin
+</Warning>
+
+### IP Address Tracking
+
+Better Auth tracks IP addresses for security:
+
+```typescript
+advanced: {
+  ipAddress: {
+    ipAddressHeaders: ["x-vercel-forwarded-for", "x-forwarded-for"],
+  },
+}
+```
+
+### Rate Limiting
+
+The Sentinel plugin provides automatic rate limiting on authentication endpoints.
+
+---
+
+## Troubleshooting
+
+### OAuth Callback URL Mismatch
+
+**Error:** `redirect_uri_mismatch`
+
+**Solution:** Ensure the callback URL in your GitHub OAuth App exactly matches:
+```
+{BETTER_AUTH_URL}/api/auth/callback/github
+```
+
+### Invalid Client Error
+
+**Error:** `invalid_client`
+
+**Solution:** Verify `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are correct and from the same OAuth App.
+
+### Session Not Persisting
+
+**Symptoms:** Users logged out on page refresh
+
+**Solutions:**
+- Verify `BETTER_AUTH_SECRET` is set and at least 32 characters
+- Check browser cookie settings (must allow cookies)
+- Ensure `BETTER_AUTH_URL` matches the actual application URL
+
+### GitHub API Rate Limiting
+
+**Symptoms:** `getServerSession()` returns partial data
+
+**Solution:** Redis caching helps, but GitHub has rate limits. Consider:
+- Using a GitHub Personal Access Token for higher limits
+- Implementing additional caching layers
+- Requesting only necessary data
+
+---
+
+## Advanced Configuration
+
+### Custom Profile Mapping
+
+Customize how GitHub profile data maps to user records:
+
+```typescript
+mapProfileToUser(profile) {
+  return {
+    githubLogin: profile.login,
+    // Add custom mappings here
+  };
+}
+```
+
+See `apps/web/src/lib/auth.ts:109-113`.
+
+### Enable User Deletion
+
+User self-service account deletion is enabled:
+
+```typescript
+user: {
+  deleteUser: {
+    enabled: true,
+  },
+}
+```
+
+This allows users to delete their accounts via the settings page.
+
+### Stripe Integration
+
+When Stripe environment variables are configured, the Stripe plugin automatically:
+- Creates Stripe customers on signup
+- Grants signup credits
+- Manages subscriptions
+
+See the [Environment Variables guide](/configuration/environment-variables#payments-stripe) for Stripe configuration details.

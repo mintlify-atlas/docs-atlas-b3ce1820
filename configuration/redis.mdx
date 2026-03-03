@@ -1,0 +1,496 @@
+---
+title: Redis Configuration
+description: Upstash Redis setup for caching GitHub API responses and session data
+---
+
+Better Hub uses Redis for caching GitHub API responses, reducing API rate limit consumption and improving performance. The application uses [Upstash Redis](https://upstash.com/) for serverless-friendly Redis access via REST API.
+
+## Why Redis?
+
+Better Hub caches:
+
+- **GitHub API responses** - Issues, pull requests, repositories, user data
+- **GitHub user profiles** - Authenticated user information
+- **GitHub ETags** - For conditional API requests
+- **Temporary session data** - Fast session lookups
+
+Caching reduces GitHub API calls by up to 90%, staying well within rate limits.
+
+---
+
+## Upstash Setup (Production)
+
+<Steps>
+  <Step title="Create Upstash account">
+    Sign up at [Upstash Console](https://console.upstash.com/).
+  </Step>
+  
+  <Step title="Create Redis database">
+    1. Click **Create Database**
+    2. Select a region close to your application
+    3. Choose **Regional** (or **Global** for multi-region)
+    4. Enable **TLS** (recommended)
+  </Step>
+  
+  <Step title="Get REST credentials">
+    In your database dashboard, find:
+    - **REST URL**: `https://[endpoint].upstash.io`
+    - **REST Token**: Your authentication token
+  </Step>
+  
+  <Step title="Configure environment variables">
+    Add to your `.env` file:
+    
+    ```bash
+    UPSTASH_REDIS_REST_URL=https://your-endpoint.upstash.io
+    UPSTASH_REDIS_REST_TOKEN=your_rest_token_here
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Keep your REST token secret. Never commit it to version control or expose it in client-side code.
+</Warning>
+
+---
+
+## Local Development Setup
+
+### Option 1: Docker Compose (Recommended)
+
+Run Redis locally with serverless-redis-http proxy:
+
+<Steps>
+  <Step title="Start Redis with Docker Compose">
+    ```bash
+    docker-compose up -d redis
+    ```
+    
+    This starts:
+    - Redis on port `6379`
+    - serverless-redis-http proxy on port `8079`
+  </Step>
+  
+  <Step title="Configure local environment">
+    Add to `.env`:
+    
+    ```bash
+    UPSTASH_REDIS_REST_URL=http://localhost:8079
+    UPSTASH_REDIS_REST_TOKEN=local_token
+    ```
+  </Step>
+</Steps>
+
+The proxy provides an Upstash-compatible REST API over local Redis.
+
+### Option 2: Upstash Free Tier
+
+Use Upstash free tier for development:
+
+- **10,000 commands/day**
+- **256 MB storage**
+- Perfect for development and testing
+
+Just create a database and use the production-like REST API locally.
+
+---
+
+## Redis Client Configuration
+
+Better Hub uses `@upstash/redis` for serverless-optimized Redis access.
+
+### Client Initialization
+
+```typescript
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+```
+
+See implementation in `apps/web/src/lib/redis.ts`.
+
+### Caching GitHub API Responses
+
+```typescript
+// Cache with 1 hour TTL
+await redis.set(
+  `github_user:${token}`,
+  JSON.stringify(userData),
+  { ex: 3600 } // 3600 seconds = 1 hour
+);
+
+// Retrieve cached data
+const cached = await redis.get(`github_user:${token}`);
+```
+
+Example from `apps/web/src/lib/auth.ts:19-26`.
+
+---
+
+## Caching Strategies
+
+### GitHub User Data
+
+**Cache Key:** `github_user:{token_hash}`
+
+**TTL:** 1 hour
+
+**Purpose:** Avoid repeated `GET /user` API calls
+
+```typescript
+const cached = await redis.get<GitHubUser>(`github_user:${hash}`);
+if (cached) return cached;
+
+// Fetch from GitHub API if not cached
+const githubUser = await octokit.users.getAuthenticated();
+await redis.set(`github_user:${hash}`, JSON.stringify(githubUser.data), {
+  ex: 3600
+});
+```
+
+### GitHub API Responses
+
+**Cache Key:** `github:{userId}:{endpoint}:{params_hash}`
+
+**TTL:** Varies by endpoint (5 minutes to 24 hours)
+
+**Purpose:** Cache repository data, issues, PRs, etc.
+
+```typescript
+const cacheKey = `github:${userId}:repos:${owner}/${repo}`;
+const cached = await redis.get(cacheKey);
+
+if (cached) {
+  return JSON.parse(cached);
+}
+
+const data = await octokit.repos.get({ owner, repo });
+await redis.set(cacheKey, JSON.stringify(data), { ex: 1800 }); // 30 min
+```
+
+### ETag-Based Conditional Caching
+
+GitHub API supports ETags for conditional requests:
+
+```typescript
+const etag = await redis.get(`github_etag:${cacheKey}`);
+
+const response = await octokit.repos.get({
+  owner,
+  repo,
+  headers: etag ? { 'If-None-Match': etag } : {},
+});
+
+if (response.status === 304) {
+  // Not modified, use cached data
+  return await redis.get(cacheKey);
+}
+
+// Update cache and ETag
+await redis.set(cacheKey, JSON.stringify(response.data), { ex: 3600 });
+await redis.set(`github_etag:${cacheKey}`, response.headers.etag, { ex: 3600 });
+```
+
+This reduces GitHub API consumption even further.
+
+---
+
+## Cache Invalidation
+
+### Manual Invalidation
+
+Invalidate specific cache entries:
+
+```typescript
+await redis.del(`github:${userId}:repos:${owner}/${repo}`);
+```
+
+### Pattern-Based Invalidation
+
+Invalidate all caches for a user:
+
+```typescript
+const keys = await redis.keys(`github:${userId}:*`);
+if (keys.length > 0) {
+  await redis.del(...keys);
+}
+```
+
+<Warning>
+  `keys()` is expensive on large datasets. Use sparingly and consider prefix-based deletion strategies.
+</Warning>
+
+### TTL-Based Expiration
+
+Most caches use automatic TTL expiration:
+
+- Short-lived data (issues, PRs): 5-15 minutes
+- Medium-lived data (repositories, users): 30-60 minutes
+- Long-lived data (organization info): 24 hours
+
+---
+
+## Performance Optimization
+
+### Batch Operations
+
+Use pipeline for multiple operations:
+
+```typescript
+const pipeline = redis.pipeline();
+
+pipeline.set('key1', 'value1');
+pipeline.set('key2', 'value2');
+pipeline.set('key3', 'value3');
+
+await pipeline.exec();
+```
+
+Reduces round trips from 3 to 1.
+
+### JSON Compression
+
+Compress large JSON before caching:
+
+```typescript
+import { compress, decompress } from 'lz-string';
+
+const compressed = compress(JSON.stringify(largeData));
+await redis.set(key, compressed, { ex: 3600 });
+
+const cached = await redis.get(key);
+if (cached) {
+  const data = JSON.parse(decompress(cached));
+}
+```
+
+Reduces storage and transfer costs.
+
+### Cache Warming
+
+Pre-populate cache for common queries:
+
+```typescript
+// On user login, warm cache with frequently accessed data
+await Promise.all([
+  warmUserRepos(userId),
+  warmUserIssues(userId),
+  warmUserPRs(userId),
+]);
+```
+
+---
+
+## Monitoring and Debugging
+
+### Upstash Console
+
+Monitor Redis usage in [Upstash Console](https://console.upstash.com/):
+
+- **Commands/sec** - Request rate
+- **Storage** - Memory usage
+- **Latency** - Response times
+- **Slow commands** - Performance bottlenecks
+
+### Cache Hit Rate
+
+Track cache effectiveness:
+
+```typescript
+let hits = 0;
+let misses = 0;
+
+const getCached = async (key: string) => {
+  const cached = await redis.get(key);
+  if (cached) {
+    hits++;
+    return cached;
+  }
+  misses++;
+  return null;
+};
+
+// Calculate hit rate
+const hitRate = (hits / (hits + misses)) * 100;
+console.log(`Cache hit rate: ${hitRate.toFixed(2)}%`);
+```
+
+Aim for 80%+ hit rate for frequently accessed data.
+
+### Debug Logging
+
+Log cache operations in development:
+
+```typescript
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  enableTelemetry: process.env.NODE_ENV === 'production',
+});
+```
+
+---
+
+## Cost Optimization
+
+### Upstash Pricing
+
+Upstash bills based on:
+
+- **Commands** - Number of Redis commands executed
+- **Storage** - Data stored in memory
+- **Bandwidth** - Data transfer
+
+**Free tier:**
+- 10,000 commands/day
+- 256 MB storage
+
+**Pro tier:**
+- $0.20 per 100K commands
+- $0.25 per GB storage
+
+### Reduce Costs
+
+<Steps>
+  <Step title="Optimize TTLs">
+    Don't cache longer than necessary. Use appropriate TTLs for each data type.
+  </Step>
+  
+  <Step title="Use compression">
+    Compress large JSON to reduce storage costs.
+  </Step>
+  
+  <Step title="Batch operations">
+    Use pipelines to reduce command count.
+  </Step>
+  
+  <Step title="Clean up stale data">
+    Regularly delete unused keys:
+    ```bash
+    redis-cli --scan --pattern 'old_pattern:*' | xargs redis-cli del
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Security
+
+### REST API Security
+
+<Warning>
+  **Security checklist:**
+  
+  1. Never expose `UPSTASH_REDIS_REST_TOKEN` in client-side code
+  2. Use HTTPS URLs in production (`https://...`)
+  3. Enable TLS on Upstash database
+  4. Rotate tokens periodically
+  5. Use IP whitelisting if available
+</Warning>
+
+### Data Encryption
+
+Upstash Redis supports:
+
+- **TLS encryption in transit** - Enabled by default on REST API
+- **Encryption at rest** - Available on paid plans
+
+For sensitive data, encrypt before caching:
+
+```typescript
+import { encrypt, decrypt } from '@/lib/crypto';
+
+const encrypted = encrypt(sensitiveData, process.env.ENCRYPTION_KEY!);
+await redis.set(key, encrypted, { ex: 3600 });
+
+const cached = await redis.get(key);
+if (cached) {
+  const decrypted = decrypt(cached, process.env.ENCRYPTION_KEY!);
+}
+```
+
+---
+
+## Troubleshooting
+
+### Connection Failed
+
+**Error:** `Failed to fetch` or connection timeout
+
+**Solutions:**
+- Verify `UPSTASH_REDIS_REST_URL` is correct
+- Check `UPSTASH_REDIS_REST_TOKEN` is valid
+- Ensure no firewall blocking outbound HTTPS
+- For local development, verify Docker container is running
+
+### Authentication Error
+
+**Error:** `Unauthorized` or `Invalid token`
+
+**Solutions:**
+- Regenerate REST token in Upstash Console
+- Verify no extra spaces in `.env` file
+- Check token hasn't expired (tokens don't expire by default)
+
+### Rate Limit Exceeded
+
+**Error:** `Too many requests`
+
+**Solutions:**
+- Upgrade Upstash plan
+- Optimize number of Redis commands (use pipelines)
+- Increase cache TTLs to reduce churn
+
+### Memory Limit Exceeded
+
+**Error:** `OOM` or storage limit
+
+**Solutions:**
+- Enable eviction policy: `allkeys-lru` (evict least recently used)
+- Reduce TTLs for large objects
+- Compress data before caching
+- Upgrade to larger plan
+
+---
+
+## Advanced Configuration
+
+### Custom Eviction Policy
+
+Configure in Upstash Console:
+
+- **noeviction** - Return errors when memory limit reached
+- **allkeys-lru** - Evict least recently used keys (recommended)
+- **allkeys-lfu** - Evict least frequently used keys
+- **volatile-ttl** - Evict keys with shortest TTL
+
+### Global Replication
+
+Upstash supports multi-region replication:
+
+1. Create Global Database in Upstash Console
+2. Select primary and replica regions
+3. Use same REST URL - Upstash routes to nearest region
+
+Reduces latency for global users.
+
+### Read Replicas
+
+For read-heavy workloads, use separate read endpoints:
+
+```typescript
+const writeRedis = new Redis({
+  url: process.env.UPSTASH_REDIS_WRITE_URL!,
+  token: process.env.UPSTASH_REDIS_WRITE_TOKEN!,
+});
+
+const readRedis = new Redis({
+  url: process.env.UPSTASH_REDIS_READ_URL!,
+  token: process.env.UPSTASH_REDIS_READ_TOKEN!,
+});
+```
+
+Scales read capacity independently.

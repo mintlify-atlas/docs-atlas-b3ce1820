@@ -1,0 +1,364 @@
+---
+title: Self-Hosting Installation
+description: Run Better Hub on your own infrastructure with Docker — complete setup guide for self-hosted deployments.
+---
+
+# Self-Hosting Installation
+
+This guide covers deploying Better Hub on your own infrastructure using Docker.
+
+## Prerequisites
+
+- **Node.js** 22+
+- **pnpm** 10+
+- **Docker** and Docker Compose
+- A **GitHub OAuth App** ([create one here](https://github.com/settings/developers))
+
+## Quick Start with Docker
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/better-auth/better-hub.git
+    cd better-hub
+    ```
+  </Step>
+  
+  <Step title="Start infrastructure services">
+    Launch PostgreSQL and Redis with Docker Compose:
+    
+    ```bash
+    docker compose up -d
+    ```
+    
+    This starts:
+    - **PostgreSQL** on `localhost:54320`
+    - **Redis** (internal)
+    - **Redis REST proxy** on `localhost:8079`
+  </Step>
+  
+  <Step title="Configure environment variables">
+    Copy the example environment file and fill in required values:
+    
+    ```bash
+    cp apps/web/.env.example apps/web/.env
+    ```
+    
+    See [Configuration](#configuration) below for required values.
+  </Step>
+  
+  <Step title="Install dependencies">
+    <CodeGroup>
+    ```bash pnpm
+    pnpm install
+    ```
+    
+    ```bash npm
+    npm install
+    ```
+    
+    ```bash yarn
+    yarn install
+    ```
+    </CodeGroup>
+  </Step>
+  
+  <Step title="Run database migrations">
+    ```bash
+    cd apps/web && npx prisma migrate dev && cd ../..
+    ```
+  </Step>
+  
+  <Step title="Start the development server">
+    ```bash
+    pnpm dev
+    ```
+    
+    Better Hub will be available at `http://localhost:3000`.
+  </Step>
+</Steps>
+
+## Configuration
+
+### Required Environment Variables
+
+Edit `apps/web/.env` with these required values:
+
+#### Authentication
+
+Create a GitHub OAuth App at [github.com/settings/developers](https://github.com/settings/developers):
+
+```bash
+GITHUB_CLIENT_ID=your_github_oauth_app_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_app_client_secret
+```
+
+<Info>
+When creating your OAuth App, set the **Homepage URL** to `http://localhost:3000` and the **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`.
+</Info>
+
+Generate a random 32-character secret for session encryption:
+
+```bash
+# Generate with openssl
+openssl rand -hex 16
+```
+
+Then add to `.env`:
+
+```bash
+BETTER_AUTH_SECRET=your_generated_32_char_string
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+#### Database
+
+For the Docker Compose setup:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:54320/better_hub
+```
+
+<Note>
+The default password is `postgres`. To change it, set `POSTGRES_PASSWORD` before running `docker compose up`.
+</Note>
+
+#### Redis
+
+For the Docker Compose setup with REST proxy:
+
+```bash
+UPSTASH_REDIS_REST_URL=http://localhost:8079
+UPSTASH_REDIS_REST_TOKEN=local_token
+```
+
+<Warning>
+The default token is `local_token`. For production, set `SRH_TOKEN` to a secure value before running `docker compose up`.
+</Warning>
+
+### AI Configuration
+
+Ghost AI requires API keys for AI providers.
+
+#### Required for Ghost
+
+```bash
+# OpenRouter powers Ghost assistant
+OPEN_ROUTER_API_KEY=your_open_router_api_key
+
+# Anthropic for specific AI tasks
+ANTHROPIC_API_KEY=your_anthropic_api_key
+```
+
+#### Optional AI Settings
+
+Customize the models Ghost uses:
+
+```bash
+# Defaults shown — uncomment to override
+# GHOST_MODEL=moonshotai/kimi-k2.5
+# GHOST_MERGE_MODEL=google/gemini-2.5-pro-preview
+
+# OpenAI (optional)
+# OPENAPI_KEY=your_openai_api_key
+```
+
+### Optional Features
+
+#### Code Sandbox (E2B)
+
+For sandboxed code execution:
+
+```bash
+E2B_API_KEY=your_e2b_api_key
+
+# Custom template (optional)
+# Build with: cd apps/web && npx e2b template build
+# E2B_TEMPLATE=your_e2b_template_id
+```
+
+#### Background Jobs (Inngest)
+
+```bash
+INNGEST_EVENT_KEY=your_inngest_event_key
+INNGEST_SIGNING_KEY=your_inngest_signing_key
+```
+
+#### Search & Memory
+
+```bash
+# Mixedbread embeddings for semantic search
+MIXEDBREAD_API_KEY=your_mixedbread_api_key
+
+# SuperMemory for AI conversation memory
+SUPER_MEMORY_API_KEY=your_super_memory_api_key
+```
+
+#### Integrations
+
+```bash
+# Slack notifications
+SLACK_CLIENT_ID=your_slack_client_id
+SLACK_CLIENT_SECRET=your_slack_client_secret
+
+# Vercel OIDC (for deployment auth)
+VERCEL_OIDC_TOKEN=your_vercel_oidc_token
+```
+
+#### Monitoring
+
+```bash
+# Sentry error tracking
+SENTRY_DSN=https://your-dsn@sentry.io/project-id
+SENTRY_AUTH_TOKEN=your_sentry_auth_token
+```
+
+#### Billing (Stripe)
+
+```bash
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+STRIPE_BASE_PRICE_ID=price_xxx
+STRIPE_METERED_PRICE_ID=price_xxx
+```
+
+## Docker Services
+
+The `docker-compose.yml` configures:
+
+### PostgreSQL
+
+```yaml
+postgres:
+  image: postgres:16-alpine
+  container_name: better-hub-postgres
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    POSTGRES_DB: better_hub
+  ports:
+    - "127.0.0.1:54320:5432"
+```
+
+### Redis with REST Proxy
+
+```yaml
+redis:
+  image: redis:7-alpine
+  container_name: better-hub-redis
+
+redis-rest:
+  image: hiett/serverless-redis-http:latest
+  container_name: better-hub-redis-rest
+  ports:
+    - "127.0.0.1:8079:80"
+  environment:
+    SRH_MODE: env
+    SRH_TOKEN: ${SRH_TOKEN:-local_token}
+    SRH_CONNECTION_STRING: redis://redis:6379
+```
+
+<Tip>
+Data persists in Docker volumes `postgres_data` and `redis_data`. To reset, run `docker compose down -v`.
+</Tip>
+
+## Development Scripts
+
+Run from the repo root:
+
+```bash
+pnpm dev          # Start all apps in dev mode
+pnpm lint         # Run oxlint
+pnpm lint:fix     # Run oxlint with auto-fix
+pnpm fmt          # Format with oxfmt
+pnpm fmt:check    # Check formatting
+pnpm typecheck    # TypeScript type checking
+pnpm check        # Run lint + fmt:check + typecheck
+```
+
+## Production Deployment
+
+<Warning>
+Before deploying to production:
+
+1. **Change default passwords** — Set `POSTGRES_PASSWORD` and `SRH_TOKEN` to secure values
+2. **Use HTTPS** — Update `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to your domain
+3. **Secure secrets** — Never commit `.env` files to version control
+4. **Update OAuth callback** — Change GitHub OAuth App callback URL to your production domain
+</Warning>
+
+For production deployments:
+
+<Steps>
+  <Step title="Build the application">
+    ```bash
+    pnpm build
+    ```
+  </Step>
+  
+  <Step title="Set production environment variables">
+    Update `.env` with production values (database, Redis, domain, etc.).
+  </Step>
+  
+  <Step title="Run migrations">
+    ```bash
+    cd apps/web && npx prisma migrate deploy && cd ../..
+    ```
+  </Step>
+  
+  <Step title="Start the production server">
+    ```bash
+    pnpm start
+    ```
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Database connection failed
+
+Verify PostgreSQL is running:
+
+```bash
+docker ps | grep better-hub-postgres
+```
+
+Check the connection string matches your Docker setup:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:54320/better_hub
+```
+
+### Redis connection failed
+
+Verify Redis REST proxy is running:
+
+```bash
+docker ps | grep better-hub-redis-rest
+```
+
+Ensure the token matches:
+
+```bash
+UPSTASH_REDIS_REST_TOKEN=local_token  # Must match SRH_TOKEN in docker-compose.yml
+```
+
+### GitHub OAuth errors
+
+Verify your OAuth App settings:
+
+1. **Homepage URL** matches `BETTER_AUTH_URL`
+2. **Callback URL** is `${BETTER_AUTH_URL}/api/auth/callback/github`
+3. `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are correct
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Learn how to use Better Hub features
+  </Card>
+  <Card title="Contributing" icon="github" href="https://github.com/better-auth/better-hub/blob/main/CONTRIBUTING.md">
+    Help build Better Hub — contributor guide
+  </Card>
+</CardGroup>

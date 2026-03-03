@@ -1,0 +1,357 @@
+---
+title: Security Advisories
+description: Track and manage security vulnerabilities in your repositories
+icon: shield
+---
+
+## Overview
+
+Better Hub provides a centralized view of security advisories and vulnerability alerts for your repositories. Track CVEs, Dependabot alerts, and CodeQL findings in one place.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Vulnerability Dashboard" icon="shield-alert">
+    See all security issues at a glance with severity indicators
+  </Card>
+  <Card title="Dependabot Integration" icon="package">
+    Automated dependency update PRs for security patches
+  </Card>
+  <Card title="CodeQL Scanning" icon="code">
+    Static analysis results for code security issues
+  </Card>
+  <Card title="GHSA Tracking" icon="database">
+    GitHub Security Advisory database integration
+  </Card>
+</CardGroup>
+
+## Security Dashboard
+
+Access the security dashboard from any repository:
+
+1. Navigate to the repository
+2. Click **"Security"** in the navigation tabs
+3. View summary of all advisories
+
+### Dashboard Layout
+
+```
+Security Overview
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 Critical: 2
+🟠 High: 5  
+🟡 Moderate: 12
+🔵 Low: 8
+
+Recent Advisories
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 GHSA-xxxx-yyyy-zzzz
+   SQL Injection in express-validator
+   Severity: Critical · Published 2 days ago
+   
+🟠 GHSA-aaaa-bbbb-cccc  
+   XSS in marked library
+   Severity: High · Published 5 days ago
+```
+
+## Advisory Details
+
+Click any advisory to see full details:
+
+### Overview Section
+
+- **GHSA ID**: GitHub Security Advisory identifier
+- **CVE ID**: Common Vulnerabilities and Exposures ID (if applicable)  
+- **Severity**: Critical, High, Moderate, or Low
+- **CVSS Score**: Numeric severity score (0-10)
+- **Published**: When the advisory was made public
+- **Updated**: Last modification date
+
+### Description
+
+Detailed explanation of the vulnerability:
+- What component is affected
+- How the vulnerability can be exploited  
+- Potential impact
+- Attack vectors
+
+### Affected Versions
+
+Which versions of the package are vulnerable:
+
+```
+Affected: >= 4.0.0, < 4.16.2
+Patched: >= 4.16.2
+```
+
+### Remediation
+
+Steps to fix the vulnerability:
+
+1. **Automated fix**: If Dependabot can auto-fix, a PR link appears
+2. **Manual update**: Upgrade instructions if auto-fix isn't possible  
+3. **Workaround**: Temporary mitigation if a patch isn't available
+
+## Dependabot Alerts
+
+Dependabot automatically detects outdated dependencies with known vulnerabilities:
+
+### Alert List
+
+In the Security tab:
+```
+Dependabot Alerts (12 open)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟠 lodash (4.17.19 → 4.17.21)  
+   Prototype Pollution
+   Auto-fix available
+   
+🟡 axios (0.21.0 → 0.21.4)
+   SSRF vulnerability  
+   Auto-fix available
+```
+
+### Auto-Fix PRs
+
+When Dependabot can fix an alert:
+
+1. Dependabot opens a PR automatically
+2. PR title: "Bump [package] from [old] to [new]"  
+3. PR description includes:
+   - Security advisory details
+   - Release notes for the new version
+   - Compatibility score
+4. Review and merge the PR to resolve the alert
+
+<Note>
+Dependabot PRs are labeled with `dependencies` and `security` for easy filtering.
+</Note>
+
+### Manual Remediation
+
+If Dependabot can't auto-fix:
+
+1. Click **"View advisory"** on the alert
+2. Follow the manual update instructions:  
+   ```bash
+   npm update [package]@[version]
+   ```
+3. Commit the changes
+4. Alert auto-closes once the fix is merged
+
+## CodeQL Scanning
+
+CodeQL performs static analysis to find security issues in your code:
+
+### Scan Results
+
+```
+Code Scanning Alerts (3 open)  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 SQL Injection
+   src/db/query.ts:45
+   User input directly in SQL query
+   
+🟠 Path Traversal
+   src/files/read.ts:23  
+   Unsanitized file path from request
+   
+🟡 Hardcoded Credentials
+   config/database.ts:12
+   API key in source code
+```
+
+### Alert Details
+
+Click an alert to see:
+
+- **File and line number**: Where the issue was detected
+- **Code snippet**: Highlighted vulnerable code  
+- **Explanation**: Why this is a security risk
+- **Recommendation**: How to fix it
+- **Data flow**: How untrusted input reaches the vulnerable sink
+
+### Resolving CodeQL Alerts
+
+1. **Fix the code**: Address the underlying issue
+2. **Commit the fix**: Push your changes  
+3. **Re-run CodeQL**: Workflow runs automatically on push
+4. **Alert closes**: If the scan no longer detects the issue
+
+Or:
+
+1. **Dismiss**: If it's a false positive
+2. **Reason**: Select dismissal reason (won't fix, false positive, used in tests)  
+3. **Comment**: Explain why it's dismissed
+
+<Tip>
+Use "Dismiss as false positive" sparingly. If you're seeing many false positives, adjust your CodeQL configuration.
+</Tip>
+
+## Severity Levels
+
+Better Hub uses GitHub's severity classification:
+
+| Severity | Color | CVSS Score | Description |
+|----------|-------|------------|-------------|
+| Critical | 🔴 Red | 9.0 - 10.0 | Immediate action required |
+| High | 🟠 Orange | 7.0 - 8.9 | Fix as soon as possible |
+| Moderate | 🟡 Yellow | 4.0 - 6.9 | Schedule a fix |
+| Low | 🔵 Blue | 0.1 - 3.9 | Minor risk, fix when convenient |
+
+<Note>
+Severity is determined by the advisory's CVSS (Common Vulnerability Scoring System) score, not by Better Hub.
+</Note>
+
+## Filtering Advisories
+
+Narrow the list with filters:
+
+### By Severity
+```
+[Critical] [High] [Moderate] [Low] [All]
+```
+
+Click a severity level to show only those advisories.
+
+### By State
+```
+[Open] [Dismissed] [Fixed] [All]
+```
+
+- **Open**: Unresolved vulnerabilities
+- **Dismissed**: Marked as false positive or won't fix  
+- **Fixed**: Patched or remediated
+
+### By Type
+```
+[Dependabot] [CodeQL] [Secret Scanning] [All]
+```
+
+Filter by alert source.
+
+## Security Overview Widget
+
+On the repository overview, a security widget shows:
+
+```
+Security
+━━━━━━━━
+🔴 2 Critical  
+🟠 5 High
+🟡 12 Moderate
+
+[View all →]
+```
+
+Click **"View all"** to open the full security dashboard.
+
+## Secret Scanning
+
+If enabled, Better Hub shows leaked secrets:
+
+### Secret Alerts
+
+```
+Secret Scanning (1 open)
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 GitHub Personal Access Token  
+   Committed in config/auth.yml:8
+   Detected 3 days ago
+```
+
+### Revoking Secrets
+
+1. **Revoke the secret**: In GitHub settings, regenerate the token/key
+2. **Remove from code**: Delete the secret from the repository  
+3. **Update references**: Use environment variables or secret management
+4. **Mark as resolved**: Alert closes once the secret is revoked
+
+<Note>
+Secrets detected in git history remain detectable even after deletion. Use tools like `git-filter-repo` to remove them from history.
+</Note>
+
+## Repository Security Settings
+
+Enable security features from the repository settings:
+
+### Dependabot
+
+1. Navigate to repository **"Settings"**
+2. **"Security & analysis"** section  
+3. Enable:
+   - **Dependabot alerts**: Vulnerability scanning
+   - **Dependabot security updates**: Auto-fix PRs
+   - **Dependabot version updates**: Keep all deps current
+
+### Code Scanning
+
+1. **"Security & analysis"** section
+2. Enable **"Code scanning"**  
+3. Set up **CodeQL workflow**:
+   - Click **"Set up"** → **"Default"**
+   - Workflow is auto-created in `.github/workflows/codeql.yml`
+   - Scans run on push and PR
+
+### Secret Scanning
+
+1. **"Security & analysis"** section  
+2. Enable **"Secret scanning"**
+3. Optionally enable **"Push protection"** to block commits with secrets
+
+## Email Notifications
+
+Get notified of new vulnerabilities:
+
+1. Repository **"Settings"** → **"Notifications"**
+2. Enable:
+   - **Security alerts**: New advisories
+   - **Dependabot alerts**: Dependency vulnerabilities  
+   - **Code scanning alerts**: CodeQL findings
+3. Choose delivery:
+   - Email
+   - Web notifications
+   - Mobile push (GitHub app)
+
+## Best Practices
+
+<Tip>
+**Prioritize by severity**: Fix critical and high-severity issues immediately. Schedule moderate and low for routine maintenance.
+</Tip>
+
+<Tip>
+**Automate updates**: Enable Dependabot security updates to get auto-fix PRs. Review and merge them promptly.
+</Tip>
+
+<Tip>
+**Review CodeQL regularly**: Check code scanning alerts weekly. Don't let them accumulate.
+</Tip>
+
+<Tip>
+**Use dependency scanning**: Scan your `package.json`, `requirements.txt`, `go.mod`, etc. Don't rely only on Dependabot.
+</Tip>
+
+<Tip>
+**Educate your team**: Share security advisories in team channels. Make security everyone's responsibility.
+</Tip>
+
+## Vulnerability Lifecycle
+
+1. **Detection**: Dependabot/CodeQL finds an issue
+2. **Alert created**: Shows up in Better Hub security dashboard  
+3. **Triage**: Review severity and impact
+4. **Remediation**: Apply patch or dismiss with reason
+5. **Verification**: Scan re-runs to confirm fix  
+6. **Closure**: Alert marked as resolved
+
+## Related Features
+
+- [CI/CD Status](/features/ci-cd) - CodeQL scans run as GitHub Actions
+- [Pull Requests](/features/pull-requests) - Review Dependabot PRs
+- [Repository Overview](/features/repository-overview) - Security summary widget
+- [Command Center](/features/command-center) - Navigate to security page with ⌘K

@@ -1,0 +1,253 @@
+---
+title: Keyboard Shortcuts
+description: Complete reference of all keyboard shortcuts in Better Hub
+icon: keyboard
+---
+
+## Overview
+
+Better Hub is built for keyboard-first navigation. Every major action has a keyboard shortcut, allowing you to review PRs, triage issues, and navigate repositories without touching the mouse.
+
+<Note>
+Shortcuts use **`⌘`** (Command) on Mac and **`Ctrl`** on Windows/Linux. This reference uses `⌘` notation.
+</Note>
+
+## Global Shortcuts
+
+These shortcuts work from any page:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `⌘K` | Open Command Center | Universal command palette for navigation and actions |
+| `⌘I` | Toggle Ghost AI | Open/close the AI assistant panel |
+| `⌘/` | Search Repos | Open command center in search mode |
+| `/` | Search (alternate) | Focus search (when not in input field) |
+| `Esc` | Close Modal/Panel | Close command center, Ghost, or any open modal |
+| `?` | Show Shortcuts | Display this help overlay (coming soon) |
+
+## Navigation Shortcuts
+
+Quick navigation between major sections:
+
+| Shortcut | Action | Context |
+|----------|--------|------|
+| `G` `D` | Go to Dashboard | Press `G`, then `D` |
+| `G` `R` | Go to Repositories | Press `G`, then `R` |
+| `G` `P` | Go to PRs | Press `G`, then `P` |
+| `G` `I` | Go to Issues | Press `G`, then `I` |
+| `G` `N` | Go to Notifications | Press `G`, then `N` |
+
+<Tip>
+Navigation shortcuts are **sequential**, not simultaneous. Press and release `G`, then press the second key.
+</Tip>
+
+## Repository Shortcuts
+
+When viewing a repository:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `⌘G` | Go to File | Open file finder for current repository |
+| `T` | File Finder (alternate) | Same as `⌘G` |
+| `C` | Go to Code Tab | Switch to code/files view |
+| `I` | Go to Issues Tab | Switch to issues list |
+| `P` | Go to Pull Requests | Switch to PRs list |
+| `A` | Go to Actions Tab | Switch to CI/CD workflows |
+| `S` | Go to Security Tab | Switch to security advisories |
+
+## Pull Request Shortcuts
+
+While reviewing a PR:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `C` | Conversation Tab | View PR description and comments |
+| `F` | Files Changed Tab | View diff and changed files |
+| `K` | Checks Tab | View CI/CD status and test results |
+| `R` | Start Review | Begin a new review (batch comments) |
+| `⌘Enter` | Submit Comment | Post comment or submit review |
+| `E` | Edit Description | Edit PR title/description (if you have permission) |
+| `N` | Next File | Navigate to next changed file |
+| `P` | Previous File | Navigate to previous changed file |
+| `⌘I` | Ask Ghost | Open AI assistant for PR analysis |
+| `M` | Merge PR | Open merge dialog (if you have write access) |
+
+### Code Review Shortcuts
+
+When viewing diffs:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Click line number` | Add Comment | Start a comment thread on that line |
+| `V` | Toggle View Mode | Switch between split and unified diff |
+| `]` | Next Comment Thread | Jump to next review comment |
+| `[` | Previous Comment Thread | Jump to previous review comment |
+| `X` | Expand All Files | Show all collapsed files |
+| `Z` | Collapse All Files | Hide all file diffs |
+
+## Issue Shortcuts
+
+In the issues list or detail view:
+
+| Shortcut | Action | Context |
+|----------|--------|------|
+| `C` | Create Issue | Open new issue dialog |
+| `E` | Edit Issue | Edit title/description (detail page) |
+| `/` | Focus Search | Focus the issue search bar |
+| `↓` | Next Issue | Navigate to next issue in list |
+| `↑` | Previous Issue | Navigate to previous issue in list |
+| `Enter` | Open Issue | Open selected issue |
+| `⌘Enter` | Submit Comment | Post comment on issue |
+| `L` | Add Label | Open label picker (if you have permission) |
+| `A` | Assign | Open assignee picker |
+| `M` | Set Milestone | Open milestone picker |
+
+## Command Center Shortcuts
+
+While the command center is open:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `↓` | Next Item | Move selection down |
+| `↑` | Previous Item | Move selection up |
+| `Enter` | Execute | Run selected command |
+| `Tab` | Next Mode | Cycle modes (commands → search → theme → ...) |
+| `Backspace` (empty) | Back | Return to commands mode |
+| `Esc` | Close | Close command center |
+| `/` | Switch to Search | Open repository search mode |
+
+## Ghost AI Shortcuts
+
+While Ghost panel is open:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `⌘Enter` | Send Message | Submit your question to Ghost |
+| `⌘T` | New Tab | Open a new Ghost conversation tab |
+| `⌘W` | Close Tab | Close current Ghost tab |
+| `⌘[` | Previous Tab | Switch to left tab |
+| `⌘]` | Next Tab | Switch to right tab |
+| `Esc` | Close Ghost | Collapse the Ghost panel |
+| `@` | Mention File | Trigger file mention autocomplete |
+| `#` | Search Files | Trigger repo file search |
+
+## Text Editing Shortcuts
+
+In comment boxes and Markdown editors:
+
+| Shortcut | Action | Result |
+|----------|--------|--------|
+| `⌘B` | Bold | **bold text** |
+| `⌘I` | Italic | *italic text* |
+| `⌘K` | Insert Link | [link](url) |
+| `⌘Shift+7` | Ordered List | 1. item |
+| `⌘Shift+8` | Bullet List | - item |
+| `⌘E` | Inline Code | `code` |
+| `⌘Shift+P` | Preview | Toggle Markdown preview |
+| `⌘Enter` | Submit | Post comment |
+| `Tab` | Indent | Indent line or list item |
+| `Shift+Tab` | Outdent | Decrease indentation |
+
+## File Tree Shortcuts
+
+When browsing repository files:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `⌘G` | Go to File | Open fuzzy file finder |
+| `Enter` | Open File | Open selected file |
+| `↓` / `↑` | Navigate | Move through file tree |
+| `→` | Expand Folder | Expand selected folder |
+| `←` | Collapse Folder | Collapse selected folder |
+| `Backspace` | Parent Folder | Navigate up one level |
+
+## Actions (CI/CD) Shortcuts
+
+On the Actions/workflows page:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `F5` | Refresh | Reload workflow runs |
+| `R` | Re-run | Re-run selected workflow (if permitted) |
+| `↓` / `↑` | Navigate | Move through workflow list |
+| `Enter` | Open Run | View workflow run details |
+| `F` | Open Filters | Toggle filter dropdown |
+
+## Browser Shortcuts
+
+Standard browser shortcuts that work in Better Hub:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `⌘R` | Refresh Page | Reload current page |
+| `⌘L` | Focus Address Bar | Edit URL |
+| `⌘[` | Back | Navigate to previous page |
+| `⌘]` | Forward | Navigate to next page |
+| `⌘T` | New Tab | Open new browser tab |
+| `⌘W` | Close Tab | Close current browser tab |
+| `⌘Shift+T` | Reopen Tab | Restore last closed tab |
+| `⌘F` | Find in Page | Search page content |
+
+## Accessibility Shortcuts
+
+For screen readers and keyboard-only navigation:
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Tab` | Next Element | Move focus to next interactive element |
+| `Shift+Tab` | Previous Element | Move focus to previous element |
+| `Enter` / `Space` | Activate | Activate focused button or link |
+| `?` | Accessibility Help | Show screen reader shortcuts (coming soon) |
+
+## Customizing Shortcuts
+
+<Note>
+Custom keyboard shortcuts are coming soon! You'll be able to remap shortcuts in Settings → Keyboard.
+</Note>
+
+## Shortcut Conflicts
+
+If a shortcut doesn't work:
+
+1. **Check browser extensions**: Extensions may override shortcuts (e.g., Vimium)
+2. **Check input focus**: Some shortcuts don't work when focused in text fields  
+3. **Check operating system**: OS shortcuts take precedence (e.g., `⌘Space` on Mac)
+4. **Use alternatives**: Most actions have multiple shortcuts or are accessible via `⌘K`
+
+## Learning Shortcuts
+
+<Tip>
+**Start with ⌘K**: The command center is the gateway to everything. Master `⌘K` first, then learn specific shortcuts as you need them.
+</Tip>
+
+<Tip>
+**Use hints**: Hover over buttons to see their keyboard shortcuts in tooltips.
+</Tip>
+
+<Tip>
+**Practice daily**: Pick 3 shortcuts to use every day for a week. They'll become muscle memory.
+</Tip>
+
+## Printable Cheat Sheet
+
+<Card title="Download Cheat Sheet" icon="download">
+A printable PDF cheat sheet is coming soon! It will include all shortcuts organized by context.
+</Card>
+
+## Platform Differences
+
+### Mac
+- Use `⌘` (Command) key
+- Use `Option` for Alt shortcuts
+
+### Windows/Linux  
+- Use `Ctrl` instead of `⌘`
+- Use `Alt` for Option shortcuts
+- Some shortcuts may vary (check tooltips)
+
+## Related Features
+
+- [Command Center](/features/command-center) - Master the `⌘K` interface
+- [Ghost AI](/features/ghost-ai) - AI assistant shortcuts
+- [Pull Requests](/features/pull-requests) - PR review shortcuts
+- [Issues](/features/issues) - Issue management shortcuts

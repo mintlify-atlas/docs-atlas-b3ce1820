@@ -1,0 +1,500 @@
+---
+title: AI Model Configuration
+description: Configure OpenRouter, Anthropic, and AI models for Ghost assistant
+---
+
+Better Hub's Ghost AI assistant uses multiple AI providers and models for different tasks. This guide covers API setup, model selection, and cost optimization.
+
+## AI Providers
+
+Better Hub integrates three AI providers:
+
+<ParamField path="OpenRouter" type="provider" required>
+  Primary AI provider with access to 100+ models. Used for Ghost assistant conversations, code generation, and most AI features.
+  
+  **Website:** [openrouter.ai](https://openrouter.ai)
+</ParamField>
+
+<ParamField path="Anthropic" type="provider" required>
+  Direct Anthropic API access for Claude models. Used for specific high-quality tasks requiring Claude.
+  
+  **Website:** [console.anthropic.com](https://console.anthropic.com)
+</ParamField>
+
+<ParamField path="OpenAI" type="provider">
+  Optional OpenAI API access for GPT models. Only needed if using GPT models directly.
+  
+  **Website:** [platform.openai.com](https://platform.openai.com)
+</ParamField>
+
+---
+
+## OpenRouter Setup
+
+OpenRouter provides unified access to models from OpenAI, Anthropic, Google, Meta, and more.
+
+<Steps>
+  <Step title="Create OpenRouter account">
+    Sign up at [OpenRouter](https://openrouter.ai).
+  </Step>
+  
+  <Step title="Generate API key">
+    1. Go to [API Keys](https://openrouter.ai/keys)
+    2. Click **Create Key**
+    3. Copy your API key
+  </Step>
+  
+  <Step title="Add credits">
+    1. Go to [Credits](https://openrouter.ai/credits)
+    2. Add credits (minimum $5)
+    3. OpenRouter bills per-request based on model pricing
+  </Step>
+  
+  <Step title="Configure environment variable">
+    Add to `.env`:
+    
+    ```bash
+    OPEN_ROUTER_API_KEY=sk-or-v1-...
+    ```
+  </Step>
+</Steps>
+
+### OpenRouter Pricing
+
+Pricing varies by model:
+
+- **Claude 4.5 Sonnet:** $3.00 / $15.00 per million tokens (input/output)
+- **GPT-4o:** $2.50 / $10.00 per million tokens
+- **Gemini 2.5 Pro:** $1.25 / $5.00 per million tokens
+- **Kimi K2.5:** $0.30 / $1.00 per million tokens (default)
+
+Full pricing: [openrouter.ai/models](https://openrouter.ai/models)
+
+<Warning>
+  OpenRouter adds a small markup (~1-10%) over provider prices. In exchange, you get unified API access and fallback handling.
+</Warning>
+
+---
+
+## Anthropic Setup
+
+Direct Anthropic access for Claude models.
+
+<Steps>
+  <Step title="Create Anthropic account">
+    Sign up at [Anthropic Console](https://console.anthropic.com).
+  </Step>
+  
+  <Step title="Generate API key">
+    1. Navigate to [API Keys](https://console.anthropic.com/settings/keys)
+    2. Click **Create Key**
+    3. Copy your API key
+  </Step>
+  
+  <Step title="Add credits">
+    Purchase credits or set up billing in the console.
+  </Step>
+  
+  <Step title="Configure environment variable">
+    Add to `.env`:
+    
+    ```bash
+    ANTHROPIC_API_KEY=sk-ant-...
+    ```
+  </Step>
+</Steps>
+
+### When to Use Direct Anthropic
+
+Use Anthropic API directly when:
+
+- You need specific Claude features not available via OpenRouter
+- You want to avoid OpenRouter markup
+- You need Anthropic's prompt caching feature
+
+Otherwise, use Claude via OpenRouter for convenience.
+
+---
+
+## Model Configuration
+
+Configure which models Ghost uses for different tasks.
+
+### Ghost Assistant Model
+
+<ParamField path="GHOST_MODEL" type="string" default="moonshotai/kimi-k2.5">
+  Primary model for Ghost AI conversations, code analysis, and general assistance.
+  
+  **Default:** `moonshotai/kimi-k2.5` (cost-effective, 256K context)
+  
+  **Recommended alternatives:**
+  
+  - `anthropic/claude-4.5-sonnet` - Highest quality, best for complex tasks
+  - `google/gemini-2.5-pro` - Excellent quality, 2M context window
+  - `openai/gpt-4o` - Strong general-purpose model
+  - `meta-llama/llama-4-70b` - Open source, cost-effective
+</ParamField>
+
+To change the model:
+
+```bash
+GHOST_MODEL=anthropic/claude-4.5-sonnet
+```
+
+### Merge Model
+
+<ParamField path="GHOST_MERGE_MODEL" type="string" default="google/gemini-2.5-pro-preview">
+  Specialized model for merge conflict resolution and code merging tasks.
+  
+  **Default:** `google/gemini-2.5-pro-preview` (excellent at code understanding)
+  
+  **Why Gemini:** Large context window (2M tokens) handles big merge conflicts.
+</ParamField>
+
+To override:
+
+```bash
+GHOST_MERGE_MODEL=anthropic/claude-4.5-sonnet
+```
+
+### Model Selection Criteria
+
+Choose models based on:
+
+**For general use:**
+- **Budget-conscious:** `moonshotai/kimi-k2.5`, `meta-llama/llama-4-70b`
+- **High quality:** `anthropic/claude-4.5-sonnet`, `openai/gpt-4o`
+- **Large context:** `google/gemini-2.5-pro`, `anthropic/claude-opus`
+
+**For code tasks:**
+- **Code generation:** `anthropic/claude-4.5-sonnet`, `openai/gpt-4o`
+- **Code review:** `google/gemini-2.5-pro`, `anthropic/claude-4.5-sonnet`
+- **Debugging:** `anthropic/claude-4.5-sonnet`, `openai/o4`
+
+**For conversations:**
+- **Natural dialogue:** `anthropic/claude-4.5-sonnet`, `openai/gpt-4o`
+- **Technical Q&A:** `google/gemini-2.5-pro`, `anthropic/claude-4.5-sonnet`
+
+---
+
+## User Model Selection
+
+Users can override the default model in their settings:
+
+1. Go to **Settings > AI Preferences**
+2. Select **Ghost Model**: Auto, or choose a specific model
+3. Enable **Use Own API Key** to use personal OpenRouter credits
+
+### Bring Your Own Key (BYOK)
+
+Users can use their own OpenRouter API keys:
+
+<Steps>
+  <Step title="Enable in settings">
+    User navigates to Settings and enables "Use Own API Key"
+  </Step>
+  
+  <Step title="Enter API key">
+    User enters their OpenRouter API key (stored encrypted)
+  </Step>
+  
+  <Step title="Usage tracking">
+    AI calls use the user's key. Platform doesn't charge credits.
+  </Step>
+</Steps>
+
+This is tracked in the database:
+
+```prisma
+model UserSettings {
+  useOwnApiKey     Boolean @default(false)
+  openrouterApiKey String?  // Encrypted
+  ghostModel       String  @default("auto")
+}
+```
+
+See `apps/web/prisma/schema.prisma:202-203`.
+
+---
+
+## Cost Management
+
+### Track AI Usage
+
+All AI calls are logged for billing:
+
+```prisma
+model AiCallLog {
+  id           Int     @id @default(autoincrement())
+  userId       String
+  provider     String  // "openrouter" | "anthropic" | "openai"
+  modelId      String  // e.g., "anthropic/claude-4.5-sonnet"
+  taskType     String  // "chat" | "code" | "merge" | etc.
+  inputTokens  Int
+  outputTokens Int
+  totalTokens  Int
+  costJson     String? // Detailed cost breakdown
+  usingOwnKey  Boolean @default(false)
+}
+```
+
+View usage in admin dashboard or query directly.
+
+### Set Spending Limits
+
+Users can set monthly spending caps:
+
+```prisma
+model SpendingLimit {
+  userId        String   @id
+  monthlyCapUsd Decimal  @default(10.00)
+}
+```
+
+Default: $10/month per user.
+
+### Optimize Costs
+
+<Steps>
+  <Step title="Use cost-effective default model">
+    `moonshotai/kimi-k2.5` is 10x cheaper than Claude while maintaining good quality.
+  </Step>
+  
+  <Step title="Implement prompt caching">
+    Cache repeated context (file contents, docs) to reduce input tokens:
+    
+    ```typescript
+    const response = await anthropic.messages.create({
+      model: "claude-4.5-sonnet",
+      system: [
+        {
+          type: "text",
+          text: largeContextData,
+          cache_control: { type: "ephemeral" }
+        }
+      ],
+      messages: [...]
+    });
+    ```
+  </Step>
+  
+  <Step title="Limit context size">
+    Only send relevant code, not entire repositories:
+    
+    ```typescript
+    const relevantFiles = await selectRelevantFiles(query, maxFiles: 5);
+    ```
+  </Step>
+  
+  <Step title="Use streaming">
+    Stream responses to improve perceived latency without affecting cost.
+  </Step>
+</Steps>
+
+### Cost Per Feature
+
+Estimated costs for typical operations:
+
+- **Chat message:** $0.001 - $0.01 (depends on model and context)
+- **Code review:** $0.02 - $0.10 (analyzing PR with diffs)
+- **Merge resolution:** $0.05 - $0.25 (large conflicts)
+- **Search query:** $0.001 - $0.005 (embedding + ranking)
+
+---
+
+## Advanced Configuration
+
+### Model Router
+
+Automatically select the best model based on task:
+
+```typescript
+function selectModel(taskType: string): string {
+  switch (taskType) {
+    case 'merge':
+      return process.env.GHOST_MERGE_MODEL || 'google/gemini-2.5-pro-preview';
+    case 'code':
+      return 'anthropic/claude-4.5-sonnet';
+    case 'chat':
+    default:
+      return process.env.GHOST_MODEL || 'moonshotai/kimi-k2.5';
+  }
+}
+```
+
+### Fallback Strategy
+
+Handle model failures gracefully:
+
+```typescript
+const modelFallbacks = {
+  'anthropic/claude-4.5-sonnet': ['openai/gpt-4o', 'google/gemini-2.5-pro'],
+  'openai/gpt-4o': ['anthropic/claude-4.5-sonnet', 'google/gemini-2.5-pro'],
+};
+
+async function callWithFallback(model: string, prompt: string) {
+  try {
+    return await callModel(model, prompt);
+  } catch (error) {
+    const fallbacks = modelFallbacks[model] || [];
+    for (const fallbackModel of fallbacks) {
+      try {
+        return await callModel(fallbackModel, prompt);
+      } catch {}
+    }
+    throw new Error('All models failed');
+  }
+}
+```
+
+### Rate Limiting
+
+Protect against abuse:
+
+```typescript
+import { Ratelimit } from '@upstash/ratelimit';
+import { redis } from '@/lib/redis';
+
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 requests per minute
+});
+
+const { success } = await ratelimit.limit(`ai_${userId}`);
+if (!success) {
+  throw new Error('Rate limit exceeded');
+}
+```
+
+---
+
+## Monitoring
+
+### Track Model Performance
+
+Log response times and success rates:
+
+```typescript
+const startTime = Date.now();
+try {
+  const response = await callModel(model, prompt);
+  const latency = Date.now() - startTime;
+  
+  await prisma.aiCallLog.create({
+    data: {
+      userId,
+      provider: 'openrouter',
+      modelId: model,
+      inputTokens: response.usage.prompt_tokens,
+      outputTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+      costJson: JSON.stringify({ latency, success: true }),
+    },
+  });
+} catch (error) {
+  // Log failure
+}
+```
+
+### Cost Alerts
+
+Alert when costs exceed thresholds:
+
+```typescript
+const monthlySpend = await getMonthlySpend(userId);
+const limit = await getSpendingLimit(userId);
+
+if (monthlySpend > limit * 0.8) {
+  await sendAlert(userId, `You've used 80% of your monthly AI budget`);
+}
+```
+
+---
+
+## Troubleshooting
+
+### API Key Invalid
+
+**Error:** `Unauthorized` or `Invalid API key`
+
+**Solutions:**
+- Verify API key is correct (check for extra spaces)
+- Ensure key has credits/billing enabled
+- Regenerate key if compromised
+
+### Rate Limit Exceeded
+
+**Error:** `429 Too Many Requests`
+
+**Solutions:**
+- Implement exponential backoff
+- Add rate limiting on your side
+- Upgrade API plan for higher limits
+- Use multiple API keys with load balancing
+
+### Model Not Found
+
+**Error:** `Model not found` or `Invalid model ID`
+
+**Solutions:**
+- Check model ID is correct: [openrouter.ai/models](https://openrouter.ai/models)
+- Some models require special access
+- Model may be deprecated - choose alternative
+
+### Context Length Exceeded
+
+**Error:** `Context length exceeded`
+
+**Solutions:**
+- Reduce context size (fewer files, shorter messages)
+- Use model with larger context window (Gemini 2.5 Pro: 2M tokens)
+- Implement context pruning strategy
+
+### High Costs
+
+**Symptoms:** Unexpectedly high AI spending
+
+**Solutions:**
+- Check `AiCallLog` table for usage patterns
+- Switch to cheaper default model
+- Implement caching for repeated queries
+- Set lower spending limits
+- Enable user BYOK to shift costs
+
+---
+
+## Security
+
+<Warning>
+  **API Key Security:**
+  
+  1. Never commit API keys to version control
+  2. Rotate keys every 90 days
+  3. Use separate keys for dev/staging/prod
+  4. Encrypt user API keys at rest (Better Hub does this automatically)
+  5. Monitor for unauthorized usage
+</Warning>
+
+### Environment-Specific Keys
+
+```bash Development
+OPEN_ROUTER_API_KEY=sk-or-v1-dev-...
+ANTHROPIC_API_KEY=sk-ant-dev-...
+```
+
+```bash Production
+OPEN_ROUTER_API_KEY=sk-or-v1-prod-...
+ANTHROPIC_API_KEY=sk-ant-prod-...
+```
+
+### Audit Logs
+
+All AI API calls are logged for security auditing:
+
+```sql
+SELECT * FROM ai_call_logs
+WHERE userId = 'user_id'
+ORDER BY createdAt DESC;
+```
+
+Monitor for suspicious patterns (excessive usage, unusual models, etc.).

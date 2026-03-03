@@ -1,0 +1,518 @@
+---
+title: Database Configuration
+description: PostgreSQL setup, Prisma configuration, and database migrations
+---
+
+Better Hub uses PostgreSQL with Prisma ORM for data persistence. This guide covers database setup, schema management, and migrations.
+
+## PostgreSQL Setup
+
+### Option 1: Docker Compose (Development)
+
+The easiest way to run PostgreSQL locally:
+
+<Steps>
+  <Step title="Start PostgreSQL with Docker Compose">
+    ```bash
+    docker-compose up -d postgres
+    ```
+    
+    This starts PostgreSQL on port `54320` to avoid conflicts with system PostgreSQL.
+  </Step>
+  
+  <Step title="Configure DATABASE_URL">
+    Add to your `.env` file:
+    
+    ```bash
+    DATABASE_URL=postgresql://postgres:postgres@localhost:54320/better_hub
+    ```
+  </Step>
+  
+  <Step title="Run migrations">
+    ```bash
+    cd apps/web
+    npx prisma migrate dev
+    ```
+  </Step>
+</Steps>
+
+### Option 2: Managed PostgreSQL (Production)
+
+For production, use a managed PostgreSQL service:
+
+<CodeGroup>
+```bash Neon
+# Get connection string from Neon dashboard
+DATABASE_URL=postgresql://user:password@ep-xxx-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+```bash Supabase
+# Get connection string from Supabase project settings
+DATABASE_URL=postgresql://postgres:[password]@db.xxx.supabase.co:5432/postgres
+```
+
+```bash Railway
+# Automatically set by Railway
+DATABASE_URL=${{DATABASE_URL}}
+```
+
+```bash Vercel Postgres
+# Automatically set by Vercel
+DATABASE_URL=${{POSTGRES_URL}}
+```
+</CodeGroup>
+
+<Warning>
+  Always use SSL connections (`sslmode=require`) for production databases.
+</Warning>
+
+### Option 3: Local PostgreSQL Installation
+
+If you have PostgreSQL installed locally:
+
+<Steps>
+  <Step title="Create database">
+    ```bash
+    createdb better_hub
+    ```
+  </Step>
+  
+  <Step title="Configure connection">
+    ```bash
+    DATABASE_URL=postgresql://localhost/better_hub
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Database Schema
+
+Better Hub's database schema is defined in `apps/web/prisma/schema.prisma`.
+
+### Core Models
+
+<ParamField path="User" type="model">
+  User accounts with GitHub authentication
+  
+  **Key fields:**
+  - `id`: Unique user identifier
+  - `email`: User email address
+  - `githubPat`: Optional GitHub Personal Access Token
+  - `onboardingDone`: Onboarding completion status
+  - `stripeCustomerId`: Stripe customer reference
+</ParamField>
+
+<ParamField path="Session" type="model">
+  Active user sessions
+  
+  **Key fields:**
+  - `token`: Session token (unique)
+  - `expiresAt`: Expiration timestamp
+  - `ipAddress`: Client IP address
+  - `userAgent`: Client user agent
+</ParamField>
+
+<ParamField path="Account" type="model">
+  OAuth provider accounts (GitHub)
+  
+  **Key fields:**
+  - `providerId`: OAuth provider ("github")
+  - `accessToken`: Encrypted OAuth access token
+  - `refreshToken`: Encrypted refresh token
+  - `scope`: Granted OAuth scopes
+</ParamField>
+
+### Feature Models
+
+<ParamField path="ChatConversation" type="model">
+  Ghost AI chat conversations
+  
+  **Relations:**
+  - Has many `ChatMessage` records
+  - Unique per `userId` + `contextKey`
+</ParamField>
+
+<ParamField path="GithubCacheEntry" type="model">
+  Cached GitHub API responses
+  
+  **Key fields:**
+  - `cacheKey`: Cache identifier
+  - `cacheType`: Type of cached data
+  - `dataJson`: Serialized response data
+  - `etag`: GitHub ETag for conditional requests
+</ParamField>
+
+<ParamField path="UsageLog" type="model">
+  AI usage tracking for billing
+  
+  **Key fields:**
+  - `taskType`: Type of AI operation
+  - `costUsd`: Cost in USD
+  - `creditUsed`: Credits consumed
+  - `stripeReported`: Whether usage was reported to Stripe
+</ParamField>
+
+<ParamField path="SearchEmbedding" type="model">
+  Vector embeddings for semantic search
+  
+  **Key fields:**
+  - `contentType`: Type of content (issue, PR, discussion)
+  - `embeddingJson`: Vector embedding data
+  - `snippet`: Text snippet for display
+</ParamField>
+
+### Full Schema Reference
+
+View the complete schema at `apps/web/prisma/schema.prisma`.
+
+---
+
+## Prisma Configuration
+
+### Client Generation
+
+Prisma Client is generated to a custom location:
+
+```prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+```
+
+This is automatically generated on:
+- `npm install` (via postinstall script)
+- `npm run build`
+- Manual: `npx prisma generate`
+
+### Import Prisma Client
+
+Use the centralized Prisma instance:
+
+```typescript
+import { prisma } from "@/lib/db";
+
+// Query example
+const users = await prisma.user.findMany();
+```
+
+<Warning>
+  Always import from `@/lib/db`, not directly from generated Prisma client. This ensures proper connection pooling.
+</Warning>
+
+### Connection Pooling
+
+For serverless environments (Vercel, AWS Lambda), use Prisma's connection pooling:
+
+```typescript
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+```
+
+See implementation in `apps/web/src/lib/db.ts`.
+
+---
+
+## Database Migrations
+
+### Development Workflow
+
+<Steps>
+  <Step title="Modify schema">
+    Edit `apps/web/prisma/schema.prisma` to make schema changes.
+  </Step>
+  
+  <Step title="Create migration">
+    ```bash
+    cd apps/web
+    npx prisma migrate dev --name describe_your_changes
+    ```
+    
+    This:
+    - Creates a new migration file
+    - Applies it to your database
+    - Regenerates Prisma Client
+  </Step>
+  
+  <Step title="Commit migration">
+    ```bash
+    git add prisma/migrations
+    git commit -m "Add migration: describe_your_changes"
+    ```
+  </Step>
+</Steps>
+
+### Production Deployment
+
+<Steps>
+  <Step title="Apply migrations">
+    Run migrations before deploying new code:
+    
+    ```bash
+    npx prisma migrate deploy
+    ```
+    
+    This applies all pending migrations without interactive prompts.
+  </Step>
+  
+  <Step title="Deploy application">
+    Deploy your application code after migrations succeed.
+  </Step>
+</Steps>
+
+<Warning>
+  **Never** use `prisma migrate dev` in production. Always use `prisma migrate deploy`.
+</Warning>
+
+### Migration Best Practices
+
+1. **Test migrations locally** before deploying
+2. **Backup production database** before applying migrations
+3. **Make backwards-compatible changes** when possible:
+   - Add new optional fields instead of required ones
+   - Add new tables instead of modifying existing ones
+   - Use multi-step migrations for breaking changes
+4. **Review generated SQL** in migration files before applying
+
+---
+
+## Database Operations
+
+### Reset Database (Development)
+
+Wipe database and reapply all migrations:
+
+```bash
+npx prisma migrate reset
+```
+
+<Warning>
+  This **deletes all data**. Only use in development.
+</Warning>
+
+### View Data with Prisma Studio
+
+Open a visual database browser:
+
+```bash
+npx prisma studio
+```
+
+Access at `http://localhost:5555`.
+
+### Seed Database
+
+Create initial data for development:
+
+```bash
+npx prisma db seed
+```
+
+Configure seed script in `package.json`:
+
+```json
+{
+  "prisma": {
+    "seed": "node --experimental-strip-types prisma/seed.ts"
+  }
+}
+```
+
+---
+
+## Indexing Strategy
+
+Better Hub uses indexes for query performance:
+
+### User Queries
+
+```prisma
+@@index([githubPat, email])
+```
+
+Optimizes looking up users by GitHub PAT or email.
+
+### Session Queries
+
+```prisma
+@@index([userId, expiresAt])
+```
+
+Fast session validation and cleanup of expired sessions.
+
+### GitHub Cache
+
+```prisma
+@@index([userId, cacheType])
+```
+
+Quick retrieval of cached GitHub data by type.
+
+### Usage Tracking
+
+```prisma
+@@index([userId, createdAt])
+@@index([stripeReported, createdAt])
+```
+
+Efficient billing queries and Stripe sync.
+
+See full index definitions in `apps/web/prisma/schema.prisma`.
+
+---
+
+## Performance Optimization
+
+### Query Optimization
+
+**Use select to fetch only needed fields:**
+
+```typescript
+const user = await prisma.user.findUnique({
+  where: { id: userId },
+  select: { id: true, name: true, email: true }
+});
+```
+
+**Use include for relations:**
+
+```typescript
+const conversation = await prisma.chatConversation.findUnique({
+  where: { id: conversationId },
+  include: { messages: true }
+});
+```
+
+### Connection Pooling
+
+For serverless environments, limit connection pool size:
+
+```typescript
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10, // Maximum connections
+});
+```
+
+### Pagination
+
+Use cursor-based pagination for large datasets:
+
+```typescript
+const messages = await prisma.chatMessage.findMany({
+  where: { conversationId },
+  take: 50,
+  cursor: { id: lastMessageId },
+  orderBy: { createdAt: 'desc' }
+});
+```
+
+---
+
+## Backup and Recovery
+
+### Automated Backups
+
+Most managed PostgreSQL services provide automated backups:
+
+- **Neon**: Automatic point-in-time recovery
+- **Supabase**: Daily automated backups
+- **Railway**: Automatic snapshots
+
+### Manual Backup
+
+Create a manual backup:
+
+```bash
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
+```
+
+### Restore from Backup
+
+```bash
+psql $DATABASE_URL < backup_20260303.sql
+```
+
+<Warning>
+  Test your backup and recovery process regularly.
+</Warning>
+
+---
+
+## Troubleshooting
+
+### Connection Refused
+
+**Error:** `Can't reach database server`
+
+**Solutions:**
+- Verify database is running: `docker ps` (Docker) or check service status
+- Check connection string format
+- Verify firewall rules allow connections
+
+### Migration Failed
+
+**Error:** Migration fails midway
+
+**Solutions:**
+- Check migration SQL for syntax errors
+- Verify database permissions
+- Manually fix database state and mark migration as applied:
+  ```bash
+  npx prisma migrate resolve --applied migration_name
+  ```
+
+### Schema Out of Sync
+
+**Error:** `Prisma schema is out of sync with database`
+
+**Solutions:**
+- Development: `npx prisma migrate dev`
+- Production: `npx prisma migrate deploy`
+- Force sync (development only): `npx prisma db push`
+
+### Too Many Connections
+
+**Error:** `too many connections`
+
+**Solutions:**
+- Reduce connection pool size
+- Use connection pooler (PgBouncer)
+- Check for connection leaks in code
+
+---
+
+## Security
+
+### Connection Security
+
+<Steps>
+  <Step title="Use SSL/TLS">
+    Always use encrypted connections in production:
+    ```
+    DATABASE_URL=postgresql://...?sslmode=require
+    ```
+  </Step>
+  
+  <Step title="Rotate credentials">
+    Regularly rotate database passwords and connection strings.
+  </Step>
+  
+  <Step title="Limit database access">
+    Restrict database access to application servers only via firewall rules.
+  </Step>
+</Steps>
+
+### Data Encryption
+
+Sensitive fields are encrypted at the application level:
+
+- OAuth tokens (via Better Auth)
+- GitHub Personal Access Tokens
+- API keys
+
+Encryption uses `BETTER_AUTH_SECRET` as the key.

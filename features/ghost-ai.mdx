@@ -1,0 +1,396 @@
+---
+title: Ghost AI Assistant
+description: AI-powered assistant for PR reviews, code navigation, commit messages, and more
+icon: ghost
+---
+
+## Overview
+
+Ghost is Better Hub's AI assistant, accessible with `⌘I` from anywhere in the app. Ghost helps you review pull requests, navigate code, triage issues, write commit messages, and answer questions about repositories.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="PR Reviews" icon="code-review">
+    Summarize changes, spot issues, and suggest improvements
+  </Card>
+  <Card title="Code Navigation" icon="compass">
+    Find files, explain functions, trace dependencies
+  </Card>
+  <Card title="Issue Triage" icon="inbox">
+    Categorize, label, and draft responses to issues
+  </Card>
+  <Card title="Commit Messages" icon="git-commit">
+    Generate conventional commit messages from diffs
+  </Card>
+</CardGroup>
+
+## Opening Ghost
+
+Ghost is available everywhere in Better Hub:
+
+### Keyboard Shortcut
+Press `⌘I` (Mac) or `Ctrl+I` (Windows/Linux) to toggle Ghost from any page.
+
+### Command Center
+1. Press `⌘K` to open the command center
+2. Select **"Open Ghost"** from the suggestions
+
+### Floating Button
+Click the Ghost icon in the bottom-right corner (appears on repository pages).
+
+<Note>
+Ghost opens in a slide-out panel on the right side of the screen, keeping your current page visible for context.
+</Note>
+
+## Ghost Panel Interface
+
+The Ghost panel has several key components:
+
+### Header
+- **Ghost icon**: Indicates active AI session
+- **Close button** (X): Collapse the panel
+- **Resize handle**: Drag to adjust panel width
+
+### Tab Bar
+
+Ghost supports **multiple tabs** for parallel conversations:
+
+- **Current tab**: Shows the active conversation
+- **Tab label**: Auto-generated from page context (e.g., "PR #123 · repo-name")
+- **New tab** (+): Start a fresh conversation
+- **Close tab** (X): Remove a tab (hover to reveal)
+
+<Tip>
+Use multiple tabs to switch between reviewing a PR and asking general repo questions without losing context.
+</Tip>
+
+### Chat Area
+
+- **Messages**: Your questions and Ghost's responses
+- **Code blocks**: Syntax-highlighted with copy button
+- **File links**: Click to navigate to mentioned files
+- **Suggestions**: Contextual prompts to get started
+
+### Input Box
+
+- **Text field**: Type your question or command
+- **Mention files**: Type `@` to mention PR files or `#` to search repo files
+- **Context chips**: Shows attached code snippets (when you select code)
+- **Send button**: Submit your message
+
+## Page-Aware Context
+
+Ghost automatically understands where you are:
+
+<Tabs>
+  <Tab title="On a Pull Request">
+    Ghost has access to:
+    - All changed files and diffs
+    - PR description
+    - Comments and reviews
+    - Commit messages
+    - Related issues
+    
+    **Example prompts:**
+    - "Summarize this PR"
+    - "Are there any security concerns?"
+    - "What files should I review first?"
+  </Tab>
+  <Tab title="On an Issue">
+    Ghost has access to:
+    - Issue title and description
+    - All comments
+    - Linked PRs
+    - Labels and metadata
+    
+    **Example prompts:**
+    - "Summarize the discussion"
+    - "Draft a response to the author"
+    - "What's the current status?"
+  </Tab>
+  <Tab title="On Repository Overview">
+    Ghost has access to:
+    - README content
+    - Recent activity
+    - Repository structure
+    - Open issues and PRs
+    
+    **Example prompts:**
+    - "What does this repo do?"
+    - "Show me recent changes"
+    - "List open bugs"
+  </Tab>
+  <Tab title="On Code Files">
+    Ghost has access to:
+    - Current file content
+    - File history
+    - Related files
+    
+    **Example prompts:**
+    - "Explain this function"
+    - "Find where this is used"
+    - "Suggest improvements"
+  </Tab>
+</Tabs>
+
+## Common Use Cases
+
+### 1. PR Review Assistance
+
+When reviewing a pull request:
+
+```
+You: Summarize this PR
+
+Ghost: This PR adds user authentication using JWT tokens. 
+Key changes:
+- New AuthService in src/auth/service.ts
+- Login/logout endpoints in src/routes/auth.ts  
+- Token validation middleware in src/middleware/auth.ts
+
+Potential concerns:
+- Token expiration is set to 24 hours (line 45) - consider shorter
+- No rate limiting on login endpoint
+- Password requirements aren't enforced
+```
+
+**Follow-up prompts:**
+- "Show me the authentication flow"
+- "Are there any security issues?"
+- "What tests were added?"
+- "Check for error handling"
+
+### 2. Code Explanation
+
+Understanding complex code:
+
+```
+You: @src/utils/parser.ts explain the parseQuery function
+
+Ghost: The parseQuery function takes a string query and converts it 
+into a structured AST (Abstract Syntax Tree). It:
+
+1. Tokenizes the input string (line 12-24)
+2. Builds an AST using recursive descent parsing (line 26-58)
+3. Validates syntax and throws errors for invalid queries (line 60-72)
+
+It's used by the search feature to interpret user search queries.
+```
+
+### 3. Issue Triage
+
+Processing new issues:
+
+```
+You: What labels should I add to this issue?
+
+Ghost: Based on the description, I suggest:
+- `bug` - User reports an error
+- `priority:high` - Affects authentication (critical path)
+- `needs-reproduction` - No repro steps provided yet
+
+I'd also ask the author for:
+- Browser version
+- Steps to reproduce
+- Error logs from console
+```
+
+### 4. Commit Message Generation
+
+When committing code:
+
+```
+You: Generate a commit message for my changes
+
+Ghost: Based on your diff:
+
+feat(auth): add JWT token refresh mechanism
+
+- Implement token refresh endpoint
+- Add RefreshToken model and repository  
+- Update AuthService to handle token renewal
+- Add tests for refresh flow
+
+Breaking change: Token expiration reduced from 24h to 2h
+```
+
+### 5. File Navigation
+
+Finding code in large repos:
+
+```
+You: Where is the user authentication logic?
+
+Ghost: User authentication is handled in:
+
+📁 src/auth/
+  - service.ts - Core AuthService class
+  - middleware.ts - Request authentication  
+  - strategies/ - Login strategies (local, OAuth)
+
+📁 src/routes/
+  - auth.ts - /login and /logout endpoints
+
+Main entry point: src/auth/service.ts:AuthService.login()
+```
+
+## Mentioning Files
+
+Attach specific files or code to your queries:
+
+### @ Mentions (PR Files)
+
+On a PR, type `@` to mention files changed in the PR:
+
+```
+You: @src/auth.ts does this handle rate limiting?
+```
+
+Ghost will analyze that specific file in context.
+
+### # Mentions (Any Repo File)
+
+Type `#` to search and mention any file in the repository:
+
+```
+You: #config compare the staging and prod configs
+```
+
+A file picker appears - select the files you want to include.
+
+### Multiple Files
+
+```
+You: @src/auth.ts @src/middleware.ts how do these interact?
+```
+
+Ghost analyzes both files and explains their relationship.
+
+## Attaching Code Snippets
+
+Select code in a diff or file view, then click **"Ask AI"**:
+
+1. Code snippet appears as a **context chip** in Ghost's input  
+2. Ask questions about that specific code:
+   - "What does this do?"
+   - "Is this secure?"
+   - "Suggest improvements"
+3. Ghost references line numbers in its response
+4. Remove context chip with the X button
+
+<Tip>
+You can attach multiple code snippets from different files to ask comparative questions.
+</Tip>
+
+## Conversation History
+
+Ghost saves your conversations:
+
+- **Per-tab history**: Each Ghost tab maintains its own conversation
+- **Persistent**: Conversations survive page navigation
+- **Searchable**: Click "History" to see past conversations
+- **Loadable**: Click a past conversation to restore it in a new tab
+
+### Starting Fresh
+
+To clear the current conversation:
+1. Click the **"+"** button to open a new tab
+2. The new tab starts with a clean slate
+3. Close the old tab if you no longer need it
+
+## Ghost Models
+
+Better Hub uses different AI models for different tasks:
+
+- **Default model**: `kimi-k2.5` (fast, context-aware)
+- **Merge model**: `gemini-2.5-pro-preview` (for PR merges)
+
+### Changing the Model
+
+1. Press `⌘K` → "Configuration" → "Model Settings"
+2. Select from available models:
+   - GPT-4
+   - Claude 3.5 Sonnet  
+   - Gemini 2.5 Pro
+   - Kimi K2.5
+3. Each model has different strengths (speed, context size, reasoning)
+
+<Accordion title="Which model should I choose?">
+**Kimi K2.5** (default) - Best balance of speed and quality for most tasks.
+
+**Claude 3.5 Sonnet** - Best for code review and technical writing.
+
+**GPT-4** - Best for general questions and explanations.
+
+**Gemini 2.5 Pro** - Best for very large context (huge PRs).
+</Accordion>
+
+## Best Practices
+
+<Tip>
+**Be specific**: Instead of "review this PR", ask "check this PR for security issues" or "explain the database changes".
+</Tip>
+
+<Tip>
+**Use mentions**: Reference specific files with `@file` or `#file` to focus Ghost's attention.
+</Tip>
+
+<Tip>
+**Follow up**: Ghost's responses are conversational. Ask clarifying questions or request elaboration.
+</Tip>
+
+<Tip>
+**Multiple tabs**: Keep separate conversations for different topics. One for PR review, one for debugging, etc.
+</Tip>
+
+<Tip>
+**Check sources**: Ghost cites file paths and line numbers. Verify its suggestions by reviewing the actual code.
+</Tip>
+
+## Limitations
+
+<Note>
+Ghost works best with:
+- PRs under 50 files changed
+- Text-based files (code, markdown, configs)
+- Repositories with clear structure
+
+Ghost may struggle with:
+- Binary files or images  
+- Very large monorepos (>10k files)
+- Generated code (minified JS, compiled output)
+</Note>
+
+## Privacy & Security
+
+- Ghost analyzes code in **your current session** only
+- Conversations are **not** used to train models
+- Private repos remain private (Ghost uses your GitHub auth)
+- Self-hosted Better Hub: All AI processing can run on-premises
+
+<Accordion title="Can I use my own API keys?">
+Yes! In Configuration → Settings, toggle "Use your own API key" and enter:
+- OpenRouter API key
+- Anthropic API key (optional)
+- OpenAI API key (optional)
+
+You'll be billed directly by the provider at their rates.
+</Accordion>
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `⌘I` | Toggle Ghost panel |
+| `⌘Enter` | Send message |
+| `Esc` | Close Ghost |
+| `⌘T` | New tab |
+| `⌘W` | Close current tab |
+
+## Related Features
+
+- [Pull Requests](/features/pull-requests) - Use Ghost for PR reviews
+- [Issues](/features/issues) - Triage issues with Ghost
+- [Command Center](/features/command-center) - Open Ghost from ⌘K
+- [Repository Overview](/features/repository-overview) - Ask Ghost about repo structure

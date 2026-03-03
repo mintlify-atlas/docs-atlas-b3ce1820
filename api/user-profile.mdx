@@ -1,0 +1,354 @@
+---
+title: User Profile & Scopes API
+description: GitHub user profile and OAuth scope endpoints
+---
+
+Retrieve GitHub user profiles and check OAuth permissions for the authenticated user.
+
+## GET /api/user-profile
+
+Fetch a GitHub user's public profile information.
+
+<ParamField query="username" type="string" required>
+  GitHub username to fetch
+</ParamField>
+
+### Response
+
+<ResponseField name="login" type="string">
+  GitHub username
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  User's display name
+</ResponseField>
+
+<ResponseField name="avatar_url" type="string">
+  URL to user's avatar image
+</ResponseField>
+
+<ResponseField name="html_url" type="string">
+  URL to user's GitHub profile
+</ResponseField>
+
+<ResponseField name="bio" type="string">
+  User's bio/description
+</ResponseField>
+
+<ResponseField name="company" type="string">
+  User's company
+</ResponseField>
+
+<ResponseField name="location" type="string">
+  User's location
+</ResponseField>
+
+<ResponseField name="blog" type="string">
+  User's blog/website URL
+</ResponseField>
+
+<ResponseField name="twitter_username" type="string">
+  User's Twitter/X username
+</ResponseField>
+
+<ResponseField name="followers" type="number">
+  Number of followers
+</ResponseField>
+
+<ResponseField name="following" type="number">
+  Number of users following
+</ResponseField>
+
+<ResponseField name="public_repos" type="number">
+  Number of public repositories
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  User type ("User" or "Organization")
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Account creation timestamp (ISO 8601)
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const username = 'octocat';
+const response = await fetch(`/api/user-profile?username=${username}`);
+const profile = await response.json();
+
+console.log(profile);
+/*
+{
+  login: "octocat",
+  name: "The Octocat",
+  avatar_url: "https://avatars.githubusercontent.com/u/583231",
+  html_url: "https://github.com/octocat",
+  bio: "GitHub mascot",
+  company: "@github",
+  location: "San Francisco",
+  blog: "https://github.blog",
+  twitter_username: "github",
+  followers: 9876,
+  following: 12,
+  public_repos: 8,
+  type: "User",
+  created_at: "2011-01-25T18:44:36Z"
+}
+*/
+```
+
+```typescript Fetch Multiple Users
+const usernames = ['octocat', 'torvalds', 'gvanrossum'];
+
+const profiles = await Promise.all(
+  usernames.map(async (username) => {
+    const response = await fetch(`/api/user-profile?username=${username}`);
+    return response.json();
+  })
+);
+
+profiles.forEach(profile => {
+  console.log(`${profile.name} (${profile.login}): ${profile.followers} followers`);
+});
+```
+
+```json Error Response (400)
+{
+  "error": "Missing username parameter"
+}
+```
+
+```json Error Response (401)
+{
+  "error": "Not authenticated"
+}
+```
+
+```json Error Response (404)
+{
+  "error": "User not found"
+}
+```
+
+```json Error Response (500)
+{
+  "error": "Failed to fetch user profile"
+}
+```
+</CodeGroup>
+
+## Cache Control
+
+The user profile endpoint returns private cache headers to prevent authenticated responses from being shared:
+
+```http
+Cache-Control: private, no-store
+```
+
+This ensures that:
+- Responses are not cached by shared/public caches
+- Each user gets their own authenticated view
+- No sensitive data leaks between users
+
+---
+
+## GET /api/user-scopes
+
+Get OAuth scopes granted for the authenticated user's GitHub account.
+
+### Response
+
+<ResponseField name="scopes" type="array">
+  Array of granted OAuth scope strings
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const response = await fetch('/api/user-scopes');
+const data = await response.json();
+
+console.log(data.scopes);
+/*
+[
+  "repo",
+  "user",
+  "read:org",
+  "workflow"
+]
+*/
+```
+
+```typescript Check Permissions
+const response = await fetch('/api/user-scopes');
+const { scopes } = await response.json();
+
+const hasRepoAccess = scopes.includes('repo');
+const hasWorkflowAccess = scopes.includes('workflow');
+const hasOrgAccess = scopes.some(s => s.startsWith('read:org') || s.startsWith('write:org'));
+
+if (!hasRepoAccess) {
+  alert('This feature requires repo access. Please re-authenticate.');
+}
+```
+
+```typescript Scope-based Feature Flags
+const { scopes } = await fetch('/api/user-scopes').then(r => r.json());
+
+const features = {
+  canCreatePR: scopes.includes('repo') || scopes.includes('public_repo'),
+  canManageActions: scopes.includes('workflow'),
+  canReadOrgs: scopes.includes('read:org') || scopes.includes('admin:org'),
+  canManageGists: scopes.includes('gist'),
+  canReadUser: scopes.includes('user') || scopes.includes('read:user')
+};
+
+console.log('Available features:', features);
+```
+
+```json Error Response (401)
+{
+  "error": "Unauthorized"
+}
+```
+
+```json Empty Scopes Response
+{
+  "scopes": []
+}
+```
+</CodeGroup>
+
+## Common GitHub OAuth Scopes
+
+### Repository Scopes
+
+- `repo` - Full control of private repositories
+- `repo:status` - Access commit status
+- `repo_deployment` - Access deployment status
+- `public_repo` - Access public repositories
+- `repo:invite` - Access repository invitations
+- `security_events` - Read and write security events
+
+### User Scopes
+
+- `user` - Full user profile access (read/write)
+- `read:user` - Read user profile data
+- `user:email` - Access user email addresses
+- `user:follow` - Follow/unfollow users
+
+### Organization Scopes
+
+- `admin:org` - Full organization control
+- `write:org` - Write organization data
+- `read:org` - Read organization data
+
+### Other Scopes
+
+- `gist` - Create gists
+- `notifications` - Access notifications
+- `workflow` - Update GitHub Actions workflows
+- `delete_repo` - Delete repositories
+
+## Usage Examples
+
+### Display User Card
+
+```typescript
+async function renderUserCard(username: string) {
+  try {
+    const profile = await fetch(`/api/user-profile?username=${username}`)
+      .then(r => r.json());
+    
+    return `
+      <div class="user-card">
+        <img src="${profile.avatar_url}" alt="${profile.name}" />
+        <h2>${profile.name || profile.login}</h2>
+        <p class="username">@${profile.login}</p>
+        ${profile.bio ? `<p class="bio">${profile.bio}</p>` : ''}
+        <div class="stats">
+          <span>${profile.followers} followers</span>
+          <span>${profile.public_repos} repos</span>
+        </div>
+        ${profile.company ? `<p>📍 ${profile.company}</p>` : ''}
+        ${profile.location ? `<p>🌍 ${profile.location}</p>` : ''}
+      </div>
+    `;
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    return '<p>User not found</p>';
+  }
+}
+```
+
+### Compare User Stats
+
+```typescript
+async function compareUsers(username1: string, username2: string) {
+  const [user1, user2] = await Promise.all([
+    fetch(`/api/user-profile?username=${username1}`).then(r => r.json()),
+    fetch(`/api/user-profile?username=${username2}`).then(r => r.json())
+  ]);
+  
+  return {
+    followers: {
+      [username1]: user1.followers,
+      [username2]: user2.followers,
+      leader: user1.followers > user2.followers ? username1 : username2
+    },
+    repos: {
+      [username1]: user1.public_repos,
+      [username2]: user2.public_repos,
+      leader: user1.public_repos > user2.public_repos ? username1 : username2
+    }
+  };
+}
+```
+
+### Permission Gate
+
+```typescript
+async function requireScopes(requiredScopes: string[]) {
+  const { scopes } = await fetch('/api/user-scopes').then(r => r.json());
+  
+  const missingScopes = requiredScopes.filter(scope => !scopes.includes(scope));
+  
+  if (missingScopes.length > 0) {
+    throw new Error(
+      `Missing required permissions: ${missingScopes.join(', ')}. ` +
+      `Please re-authenticate with additional scopes.`
+    );
+  }
+  
+  return true;
+}
+
+// Usage
+try {
+  await requireScopes(['repo', 'workflow']);
+  // Proceed with GitHub Actions workflow updates
+} catch (error) {
+  console.error(error.message);
+  // Show re-authentication prompt
+}
+```
+
+### Conditional UI Rendering
+
+```typescript
+async function renderNavigation() {
+  const { scopes } = await fetch('/api/user-scopes').then(r => r.json());
+  
+  const navItems = [
+    { label: 'Repositories', path: '/repos', scope: 'repo' },
+    { label: 'Pull Requests', path: '/pulls', scope: 'repo' },
+    { label: 'Actions', path: '/actions', scope: 'workflow' },
+    { label: 'Organizations', path: '/orgs', scope: 'read:org' },
+    { label: 'Gists', path: '/gists', scope: 'gist' }
+  ];
+  
+  return navItems
+    .filter(item => !item.scope || scopes.includes(item.scope))
+    .map(item => `<a href="${item.path}">${item.label}</a>`);
+}
+```

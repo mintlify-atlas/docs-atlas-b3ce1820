@@ -1,0 +1,360 @@
+---
+title: Code Analysis API
+description: Code highlighting and merge conflict analysis endpoints
+---
+
+Better Hub provides advanced code analysis capabilities including syntax highlighting and merge conflict detection.
+
+## POST /api/highlight-code
+
+Generate syntax-highlighted tokens for code display using Shiki.
+
+<ParamField body="code" type="string" required>
+  Source code to highlight (max 500,000 characters)
+</ParamField>
+
+<ParamField body="filename" type="string" required>
+  Filename used to determine language syntax (e.g., "app.ts", "README.md")
+</ParamField>
+
+### Response
+
+<ResponseField name="tokens" type="array">
+  Array of syntax-highlighted token arrays, one per line
+  
+  Each token contains:
+  - `content`: string - The text content
+  - `color`: string - Hex color code
+  - `fontStyle`: number - Font style flags
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const response = await fetch('/api/highlight-code', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    code: `function hello(name: string) {\n  return \`Hello, \${name}!\`;\n}`,
+    filename: 'hello.ts'
+  })
+});
+
+const data = await response.json();
+/*
+{
+  tokens: [
+    [
+      { content: "function", color: "#C586C0", fontStyle: 0 },
+      { content: " ", color: "#D4D4D4", fontStyle: 0 },
+      { content: "hello", color: "#DCDCAA", fontStyle: 0 },
+      // ... more tokens
+    ],
+    // ... more lines
+  ]
+}
+*/
+```
+
+```json Error Response (400)
+{
+  "error": "Missing required fields: code, filename"
+}
+```
+
+```json Error Response (413)
+{
+  "error": "Code exceeds maximum length of 500000 characters"
+}
+```
+
+```json Error Response (401)
+{
+  "error": "Unauthorized"
+}
+```
+</CodeGroup>
+
+<Warning>
+  This endpoint has a maximum code length of 500,000 characters. For larger files, consider chunking or using a different approach.
+</Warning>
+
+---
+
+## GET /api/merge-conflicts
+
+Analyze merge conflicts between two branches using three-way merge algorithm.
+
+<ParamField query="owner" type="string" required>
+  Repository owner
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  Repository name
+</ParamField>
+
+<ParamField query="base" type="string" required>
+  Base branch name (e.g., "main")
+</ParamField>
+
+<ParamField query="head" type="string" required>
+  Head branch name. For fork PRs, use format `"owner:branch"`
+</ParamField>
+
+### Response
+
+<ResponseField name="mergeBaseSha" type="string">
+  SHA of the merge base commit (common ancestor)
+</ResponseField>
+
+<ResponseField name="baseBranch" type="string">
+  Base branch name
+</ResponseField>
+
+<ResponseField name="headBranch" type="string">
+  Head branch name
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of files with conflict analysis
+  
+  <ResponseField name="path" type="string">
+    File path
+  </ResponseField>
+  
+  <ResponseField name="hasConflicts" type="boolean">
+    Whether the file has merge conflicts
+  </ResponseField>
+  
+  <ResponseField name="autoResolved" type="boolean">
+    Whether conflicts were automatically resolved
+  </ResponseField>
+  
+  <ResponseField name="hunks" type="array">
+    Array of merge hunks
+    
+    Each hunk has:
+    - `type`: `"clean"` | `"conflict"`
+    - `resolvedLines`: string[] - For clean hunks
+    - `baseLines`: string[] - For conflicts
+    - `headLines`: string[] - For conflicts
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const params = new URLSearchParams({
+  owner: 'acme',
+  repo: 'app',
+  base: 'main',
+  head: 'feature/auth'
+});
+
+const response = await fetch(`/api/merge-conflicts?${params}`);
+const data = await response.json();
+/*
+{
+  mergeBaseSha: "abc123def456",
+  baseBranch: "main",
+  headBranch: "feature/auth",
+  files: [
+    {
+      path: "src/auth.ts",
+      hasConflicts: true,
+      autoResolved: false,
+      hunks: [
+        {
+          type: "clean",
+          resolvedLines: [
+            "import { User } from './types';",
+            ""
+          ]
+        },
+        {
+          type: "conflict",
+          baseLines: [
+            "export function authenticate(token: string) {",
+            "  return validateToken(token);",
+            "}"
+          ],
+          headLines: [
+            "export async function authenticate(token: string) {",
+            "  return await validateTokenAsync(token);",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      path: "src/utils.ts",
+      hasConflicts: false,
+      autoResolved: true,
+      hunks: [
+        {
+          type: "clean",
+          resolvedLines: [
+            "export function formatDate(date: Date) {",
+            "  return date.toISOString();",
+            "}"
+          ]
+        }
+      ]
+    }
+  ]
+}
+*/
+```
+
+```json Fork PR Request
+// For a fork PR from user/repo:feature to upstream/repo:main
+GET /api/merge-conflicts?owner=upstream&repo=app&base=main&head=user:feature
+```
+
+```json Error Response (400)
+{
+  "error": "Missing required parameters: owner, repo, base, head"
+}
+```
+
+```json Error Response (401)
+{
+  "error": "Not authenticated"
+}
+```
+
+```json Error Response (404)
+{
+  "error": "Could not compare branches. The branch may not exist or you may not have access. If this is a fork PR, ensure the head branch is accessible."
+}
+```
+
+```json No Conflicts Response
+{
+  "mergeBaseSha": "abc123",
+  "baseBranch": "main",
+  "headBranch": "feature/auth",
+  "files": []
+}
+```
+</CodeGroup>
+
+<Warning>
+  This endpoint analyzes up to 30 files per request. For PRs with more changed files, only the first 30 will be analyzed.
+</Warning>
+
+## Understanding Merge Conflicts
+
+### Three-Way Merge Algorithm
+
+The merge conflict analysis uses a three-way merge algorithm that compares:
+
+1. **Merge Base (Ancestor)**: The common ancestor commit of both branches
+2. **Base Branch**: Your target branch (e.g., `main`)
+3. **Head Branch**: Your source branch with changes
+
+### Conflict Types
+
+**Clean Hunks** - No conflicts, automatically merged:
+- Changes only in base branch
+- Changes only in head branch
+- Identical changes in both branches
+- New files
+
+**Conflict Hunks** - Manual resolution required:
+- Different changes to the same lines in both branches
+- One branch modified, other deleted the same lines
+
+### Auto-Resolution
+
+Files are marked as `autoResolved: true` when all hunks are clean, meaning:
+- No manual intervention needed
+- Safe to auto-merge
+- Changes don't overlap
+
+### Example Use Cases
+
+<CodeGroup>
+```typescript Check PR Conflicts
+// Before merging a PR, check for conflicts
+const conflicts = await fetch(
+  `/api/merge-conflicts?owner=acme&repo=app&base=main&head=feature/auth`
+).then(r => r.json());
+
+const hasConflicts = conflicts.files.some(f => f.hasConflicts);
+
+if (hasConflicts) {
+  console.log('Manual resolution required');
+  conflicts.files
+    .filter(f => f.hasConflicts)
+    .forEach(file => {
+      console.log(`Conflicts in ${file.path}`);
+    });
+} else {
+  console.log('Safe to merge');
+}
+```
+
+```typescript Display Conflict UI
+// Render conflict hunks in UI for manual resolution
+conflicts.files.forEach(file => {
+  file.hunks.forEach(hunk => {
+    if (hunk.type === 'conflict') {
+      renderConflictEditor({
+        path: file.path,
+        baseLines: hunk.baseLines,
+        headLines: hunk.headLines,
+        onResolve: (resolvedLines) => {
+          // Save resolution
+        }
+      });
+    }
+  });
+});
+```
+
+```typescript Fork PR Conflicts
+// Check conflicts for a fork PR
+const forkConflicts = await fetch(
+  `/api/merge-conflicts?` +
+  `owner=vercel&repo=next.js&base=main&head=contributor:feature`
+).then(r => r.json());
+```
+</CodeGroup>
+
+## Integration Tips
+
+### Pre-merge Validation
+
+```typescript
+async function canMergePR(owner: string, repo: string, pr: number) {
+  // Get PR details first
+  const prData = await fetchPRDetails(owner, repo, pr);
+  
+  // Check for conflicts
+  const conflicts = await fetch(
+    `/api/merge-conflicts?` +
+    `owner=${owner}&repo=${repo}&` +
+    `base=${prData.base}&head=${prData.head}`
+  ).then(r => r.json());
+  
+  return !conflicts.files.some(f => f.hasConflicts);
+}
+```
+
+### Conflict Resolution Workflow
+
+```typescript
+async function getConflictResolutionStatus(owner, repo, base, head) {
+  const result = await fetch(
+    `/api/merge-conflicts?owner=${owner}&repo=${repo}&base=${base}&head=${head}`
+  ).then(r => r.json());
+  
+  const stats = {
+    totalFiles: result.files.length,
+    filesWithConflicts: result.files.filter(f => f.hasConflicts).length,
+    autoResolved: result.files.filter(f => f.autoResolved).length,
+    needsManualReview: result.files.filter(f => !f.autoResolved).length
+  };
+  
+  return stats;
+}
+```

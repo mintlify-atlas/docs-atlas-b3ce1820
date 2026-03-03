@@ -1,0 +1,192 @@
+---
+title: Local Development Setup
+description: Get Better Hub running on your local machine
+icon: wrench
+---
+
+This guide walks you through setting up Better Hub for local development.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** 22 or higher
+- **pnpm** 10 or higher (package manager)
+- **Docker** (for running PostgreSQL locally)
+- **Git** (for version control)
+
+You'll also need:
+
+- A **GitHub account**
+- A **GitHub OAuth App** ([create one here](https://github.com/settings/developers))
+
+<Note>
+  When creating your GitHub OAuth App, set the callback URL to `http://localhost:3000/api/auth/callback/github` for local development.
+</Note>
+
+## Setup Steps
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the Better Hub repository to your local machine:
+
+    ```bash
+    git clone https://github.com/better-auth/better-hub.git
+    cd better-hub
+    ```
+  </Step>
+
+  <Step title="Use the correct Node.js version">
+    The project includes an `.nvmrc` file specifying Node.js 22. If you use `nvm`, run:
+
+    ```bash
+    nvm use
+    ```
+
+    This ensures you're using the correct Node.js version for the project.
+  </Step>
+
+  <Step title="Start PostgreSQL with Docker">
+    Better Hub uses PostgreSQL for data storage. Start it using Docker Compose:
+
+    ```bash
+    docker compose up -d
+    ```
+
+    This runs PostgreSQL in the background. The database configuration is in `docker-compose.yml`.
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and fill in the required values:
+
+    ```bash
+    cp apps/web/.env.example apps/web/.env
+    ```
+
+    Open `apps/web/.env` and configure the following variables:
+
+    <Accordion title="Required Environment Variables">
+      - `DATABASE_URL` - PostgreSQL connection string (provided by Docker Compose)
+      - `GITHUB_CLIENT_ID` - From your GitHub OAuth App
+      - `GITHUB_CLIENT_SECRET` - From your GitHub OAuth App
+      - `BETTER_AUTH_SECRET` - Generate a random string for session encryption
+      - `BETTER_AUTH_URL` - Set to `http://localhost:3000` for local development
+
+      Optional but recommended for full functionality:
+      - AI provider keys (OpenRouter, Anthropic, etc.)
+      - Redis connection (Upstash)
+      - S3/R2 for file uploads
+    </Accordion>
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all project dependencies using pnpm:
+
+    ```bash
+    pnpm install
+    ```
+
+    This installs dependencies for all workspaces in the monorepo.
+  </Step>
+
+  <Step title="Run database migrations">
+    Set up the database schema using Prisma:
+
+    ```bash
+    cd apps/web && npx prisma migrate dev && cd ../..
+    ```
+
+    This creates all necessary database tables based on the Prisma schema.
+  </Step>
+
+  <Step title="Start the development server">
+    Launch the development server:
+
+    ```bash
+    pnpm dev
+    ```
+
+    The application will be available at `http://localhost:3000`.
+  </Step>
+</Steps>
+
+## Development Scripts
+
+Run these commands from the monorepo root:
+
+<CodeGroup>
+```bash Development
+pnpm dev          # Start all apps in development mode
+```
+
+```bash Linting
+pnpm lint         # Run oxlint to check for issues
+pnpm lint:fix     # Run oxlint with auto-fix
+```
+
+```bash Formatting
+pnpm fmt          # Format code with oxfmt
+pnpm fmt:check    # Check if code is formatted correctly
+```
+
+```bash Type Checking
+pnpm typecheck    # Run TypeScript type checking across all workspaces
+```
+
+```bash Quality Checks
+pnpm check        # Run lint + fmt:check + typecheck (recommended before commits)
+pnpm fix          # Run lint:fix + fmt (auto-fix everything possible)
+```
+</CodeGroup>
+
+<Note>
+  Always run `pnpm check` before pushing changes to ensure your code passes all quality checks.
+</Note>
+
+## Troubleshooting
+
+<Accordion title="Port 3000 already in use">
+  If port 3000 is already occupied, you can change the port by setting the `PORT` environment variable:
+
+  ```bash
+  PORT=3001 pnpm dev
+  ```
+</Accordion>
+
+<Accordion title="Database connection errors">
+  Ensure Docker is running and PostgreSQL is up:
+
+  ```bash
+  docker compose ps
+  ```
+
+  If the database isn't running, restart it:
+
+  ```bash
+  docker compose down
+  docker compose up -d
+  ```
+</Accordion>
+
+<Accordion title="Prisma client out of sync">
+  If you see Prisma-related errors, regenerate the Prisma client:
+
+  ```bash
+  cd apps/web && npx prisma generate && cd ../..
+  ```
+</Accordion>
+
+<Accordion title="GitHub OAuth not working">
+  Verify your GitHub OAuth App settings:
+  - Homepage URL: `http://localhost:3000`
+  - Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+  - Client ID and Secret match your `.env` file
+</Accordion>
+
+## Next Steps
+
+Now that you have Better Hub running locally:
+
+- Read the [Contributing Guidelines](/development/contributing) to understand the PR workflow
+- Explore the [Architecture Overview](/development/architecture) to understand the codebase structure
+- Start building features or fixing bugs!

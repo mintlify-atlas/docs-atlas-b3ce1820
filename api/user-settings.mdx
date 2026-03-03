@@ -1,0 +1,456 @@
+---
+title: User Settings API
+description: Manage user preferences and application settings
+---
+
+Manage user-specific settings including display preferences, themes, AI model configuration, and API keys.
+
+## GET /api/user-settings
+
+Retrieve current user settings.
+
+### Response
+
+<ResponseField name="userId" type="string">
+  User ID
+</ResponseField>
+
+<ResponseField name="displayName" type="string">
+  User's display name
+</ResponseField>
+
+<ResponseField name="theme" type="string">
+  UI theme preference: `"light"`, `"dark"`, or `"system"`
+  
+  Default: `"system"`
+</ResponseField>
+
+<ResponseField name="colorTheme" type="string">
+  Color theme name
+  
+  Default: `"better-auth"`
+</ResponseField>
+
+<ResponseField name="colorMode" type="string">
+  Color mode: `"light"` or `"dark"`
+  
+  Default: `"dark"`
+</ResponseField>
+
+<ResponseField name="ghostModel" type="string">
+  AI model for Ghost chat
+  
+  Default: `"auto"`
+</ResponseField>
+
+<ResponseField name="useOwnApiKey" type="boolean">
+  Whether user is using their own OpenRouter API key
+  
+  Default: `false`
+</ResponseField>
+
+<ResponseField name="openrouterApiKey" type="string">
+  Masked OpenRouter API key (last 4 characters visible)
+  
+  Returns `null` if not set, or `"****XXXX"` format if set
+</ResponseField>
+
+<ResponseField name="githubPat" type="string">
+  Masked GitHub Personal Access Token (last 4 characters visible)
+  
+  Returns `null` if not set, or `"****XXXX"` format if set
+</ResponseField>
+
+<ResponseField name="codeThemeLight" type="string">
+  Code syntax theme for light mode
+  
+  Default: `"vitesse-light"`
+</ResponseField>
+
+<ResponseField name="codeThemeDark" type="string">
+  Code syntax theme for dark mode
+  
+  Default: `"vitesse-black"`
+</ResponseField>
+
+<ResponseField name="codeFont" type="string">
+  Code font family
+  
+  Default: `"default"`
+</ResponseField>
+
+<ResponseField name="codeFontSize" type="number">
+  Code font size in pixels
+  
+  Default: `13`, Range: 8-32
+</ResponseField>
+
+<ResponseField name="onboardingDone" type="boolean">
+  Whether user has completed onboarding
+  
+  Default: `false`
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Last update timestamp (ISO 8601)
+</ResponseField>
+
+<CodeGroup>
+```typescript Request
+const response = await fetch('/api/user-settings');
+const settings = await response.json();
+
+console.log(settings);
+/*
+{
+  userId: "user_123",
+  displayName: "John Doe",
+  theme: "dark",
+  colorTheme: "better-auth",
+  colorMode: "dark",
+  ghostModel: "auto",
+  useOwnApiKey: false,
+  openrouterApiKey: null,
+  githubPat: "****abcd",
+  codeThemeLight: "vitesse-light",
+  codeThemeDark: "vitesse-black",
+  codeFont: "default",
+  codeFontSize: 13,
+  onboardingDone: true,
+  updatedAt: "2024-01-15T10:30:00Z"
+}
+*/
+```
+
+```json Error Response (401)
+{
+  "error": "Unauthorized"
+}
+```
+</CodeGroup>
+
+<Warning>
+  API keys are always masked in responses. To update them, you must provide the full key value in PATCH requests.
+</Warning>
+
+---
+
+## PATCH /api/user-settings
+
+Update user settings. Only provided fields will be updated.
+
+<ParamField body="displayName" type="string">
+  User's display name (max 100 characters)
+</ParamField>
+
+<ParamField body="theme" type="string">
+  UI theme: `"light"`, `"dark"`, or `"system"`
+</ParamField>
+
+<ParamField body="colorTheme" type="string">
+  Color theme name (max 50 characters)
+</ParamField>
+
+<ParamField body="colorMode" type="string">
+  Color mode: `"light"` or `"dark"`
+</ParamField>
+
+<ParamField body="ghostModel" type="string">
+  AI model identifier (max 100 characters)
+  
+  Examples: `"auto"`, `"gpt-4"`, `"claude-3-opus"`
+</ParamField>
+
+<ParamField body="useOwnApiKey" type="boolean">
+  Enable/disable using own OpenRouter API key
+</ParamField>
+
+<ParamField body="openrouterApiKey" type="string">
+  OpenRouter API key (max 500 characters)
+  
+  Set to `null` to remove the key
+</ParamField>
+
+<ParamField body="githubPat" type="string">
+  GitHub Personal Access Token (max 500 characters)
+  
+  Set to `null` to remove the token
+</ParamField>
+
+<ParamField body="codeThemeLight" type="string">
+  Code theme for light mode (max 100 characters)
+</ParamField>
+
+<ParamField body="codeThemeDark" type="string">
+  Code theme for dark mode (max 100 characters)
+</ParamField>
+
+<ParamField body="codeFont" type="string">
+  Code font family (max 100 characters)
+</ParamField>
+
+<ParamField body="codeFontSize" type="number">
+  Code font size in pixels (8-32)
+</ParamField>
+
+<ParamField body="onboardingDone" type="boolean">
+  Mark onboarding as complete
+</ParamField>
+
+### Response
+
+Returns the updated settings object with the same structure as GET.
+
+<CodeGroup>
+```typescript Update Theme
+const response = await fetch('/api/user-settings', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    theme: 'dark',
+    colorMode: 'dark',
+    codeThemeDark: 'github-dark'
+  })
+});
+
+const updated = await response.json();
+console.log('Theme updated:', updated.theme);
+```
+
+```typescript Set API Key
+const response = await fetch('/api/user-settings', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    useOwnApiKey: true,
+    openrouterApiKey: 'sk-or-v1-1234567890abcdef...' // Full key
+  })
+});
+
+const updated = await response.json();
+console.log('API key set:', updated.openrouterApiKey); // Returns masked: "****cdef"
+```
+
+```typescript Remove API Key
+const response = await fetch('/api/user-settings', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    useOwnApiKey: false,
+    openrouterApiKey: null
+  })
+});
+```
+
+```typescript Update Display Settings
+const response = await fetch('/api/user-settings', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    displayName: 'Jane Smith',
+    codeFont: 'JetBrains Mono',
+    codeFontSize: 14
+  })
+});
+```
+
+```typescript Complete Onboarding
+const response = await fetch('/api/user-settings', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    onboardingDone: true
+  })
+});
+```
+
+```json Error Response (400)
+{
+  "error": "Invalid input",
+  "details": {
+    "codeFontSize": ["Number must be greater than or equal to 8"]
+  }
+}
+```
+
+```json Error Response (401)
+{
+  "error": "Unauthorized"
+}
+```
+</CodeGroup>
+
+## Settings Validation
+
+### Field Constraints
+
+| Field | Type | Min | Max | Default |
+|-------|------|-----|-----|----------|
+| displayName | string | - | 100 chars | - |
+| theme | enum | - | - | "system" |
+| colorTheme | string | - | 50 chars | "better-auth" |
+| colorMode | enum | - | - | "dark" |
+| ghostModel | string | - | 100 chars | "auto" |
+| openrouterApiKey | string | - | 500 chars | null |
+| githubPat | string | - | 500 chars | null |
+| codeThemeLight | string | - | 100 chars | "vitesse-light" |
+| codeThemeDark | string | - | 100 chars | "vitesse-black" |
+| codeFont | string | - | 100 chars | "default" |
+| codeFontSize | number | 8 | 32 | 13 |
+
+### Theme Values
+
+**UI Theme (`theme`)**:
+- `"light"` - Always light mode
+- `"dark"` - Always dark mode
+- `"system"` - Follow system preference
+
+**Color Mode (`colorMode`)**:
+- `"light"` - Light color palette
+- `"dark"` - Dark color palette
+
+### AI Model Configuration
+
+**Ghost Model (`ghostModel`)**:
+- `"auto"` - Automatic model selection based on task
+- Specific model IDs (e.g., `"gpt-4"`, `"claude-3-opus"`)
+
+When `useOwnApiKey` is `true`, the specified `ghostModel` will be used with the user's `openrouterApiKey`.
+
+## Usage Examples
+
+### Theme Switcher
+
+```typescript
+async function setTheme(theme: 'light' | 'dark' | 'system') {
+  const response = await fetch('/api/user-settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ theme })
+  });
+  
+  if (response.ok) {
+    // Apply theme to document
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+}
+```
+
+### Settings Form
+
+```typescript
+interface SettingsFormData {
+  displayName: string;
+  theme: 'light' | 'dark' | 'system';
+  codeFont: string;
+  codeFontSize: number;
+}
+
+async function saveSettings(data: SettingsFormData) {
+  try {
+    const response = await fetch('/api/user-settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+    
+    const updated = await response.json();
+    console.log('Settings saved:', updated);
+    return updated;
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    throw error;
+  }
+}
+```
+
+### API Key Management
+
+```typescript
+async function configureCustomApiKey(apiKey: string | null) {
+  const response = await fetch('/api/user-settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      useOwnApiKey: apiKey !== null,
+      openrouterApiKey: apiKey
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to update API key');
+  }
+  
+  return response.json();
+}
+
+// Enable custom key
+await configureCustomApiKey('sk-or-v1-...');
+
+// Disable custom key
+await configureCustomApiKey(null);
+```
+
+### Code Editor Settings
+
+```typescript
+interface CodeEditorSettings {
+  font: string;
+  fontSize: number;
+  themeLight: string;
+  themeDark: string;
+}
+
+async function updateCodeEditor(settings: CodeEditorSettings) {
+  const response = await fetch('/api/user-settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      codeFont: settings.font,
+      codeFontSize: settings.fontSize,
+      codeThemeLight: settings.themeLight,
+      codeThemeDark: settings.themeDark
+    })
+  });
+  
+  return response.json();
+}
+
+await updateCodeEditor({
+  font: 'Fira Code',
+  fontSize: 14,
+  themeLight: 'github-light',
+  themeDark: 'dracula'
+});
+```
+
+### Onboarding Flow
+
+```typescript
+async function completeOnboarding(initialSettings: Partial<UserSettings>) {
+  const response = await fetch('/api/user-settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...initialSettings,
+      onboardingDone: true
+    })
+  });
+  
+  if (response.ok) {
+    // Redirect to main app
+    window.location.href = '/dashboard';
+  }
+}
+
+await completeOnboarding({
+  displayName: 'John Doe',
+  theme: 'dark',
+  ghostModel: 'gpt-4'
+});
+```

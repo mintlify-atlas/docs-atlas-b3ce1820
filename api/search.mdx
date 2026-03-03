@@ -1,0 +1,460 @@
+---
+title: "Search Endpoints"
+description: "API endpoints for searching repositories, code, and users on GitHub"
+---
+
+## Search Repositories
+
+Search for repositories across GitHub.
+
+```bash
+GET /api/search-repos
+```
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search query using [GitHub search syntax](https://docs.github.com/en/search-github/searching-on-github/searching-for-repositories)
+  
+  **Examples:**
+  - `tetris language:assembly` - Assembly Tetris implementations
+  - `stars:>1000` - Repositories with over 1000 stars
+  - `user:octocat` - Repositories owned by octocat
+  - `org:github` - Repositories in the GitHub organization
+  - `topic:react` - Repositories tagged with react
+</ParamField>
+
+<ParamField query="language" type="string">
+  Filter by programming language (e.g., "javascript", "python", "typescript")
+  
+  This parameter is automatically added to the query as `language:{value}`
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="per_page" type="number" default="30">
+  Number of results per page (minimum: 1, maximum: 100)
+</ParamField>
+
+### Response
+
+<ResponseField name="total_count" type="number">
+  Total number of repositories matching the search
+</ResponseField>
+
+<ResponseField name="incomplete_results" type="boolean">
+  Whether the search results are incomplete
+</ResponseField>
+
+<ResponseField name="items" type="object[]">
+  Array of repository objects
+  
+  <Expandable title="Repository Object (selected fields)">
+    <ResponseField name="id" type="number">
+      Repository ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Repository name
+    </ResponseField>
+    
+    <ResponseField name="full_name" type="string">
+      Full name (owner/repo)
+    </ResponseField>
+    
+    <ResponseField name="description" type="string | null">
+      Repository description
+    </ResponseField>
+    
+    <ResponseField name="owner" type="object">
+      Owner information (login, avatar_url, etc.)
+    </ResponseField>
+    
+    <ResponseField name="html_url" type="string">
+      GitHub URL to the repository
+    </ResponseField>
+    
+    <ResponseField name="language" type="string | null">
+      Primary programming language
+    </ResponseField>
+    
+    <ResponseField name="stargazers_count" type="number">
+      Number of stars
+    </ResponseField>
+    
+    <ResponseField name="forks_count" type="number">
+      Number of forks
+    </ResponseField>
+    
+    <ResponseField name="open_issues_count" type="number">
+      Number of open issues
+    </ResponseField>
+    
+    <ResponseField name="topics" type="string[]">
+      Repository topics/tags
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/search-repos?q=tetris&language=javascript&per_page=10"
+```
+
+```javascript fetch
+const response = await fetch('/api/search-repos?q=machine+learning&language=python&page=1');
+const data = await response.json();
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "total_count": 1247,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 123456789,
+      "name": "awesome-ml",
+      "full_name": "octocat/awesome-ml",
+      "description": "A curated list of machine learning resources",
+      "owner": {
+        "login": "octocat",
+        "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+      },
+      "html_url": "https://github.com/octocat/awesome-ml",
+      "language": "Python",
+      "stargazers_count": 5432,
+      "forks_count": 891,
+      "open_issues_count": 23,
+      "topics": ["machine-learning", "python", "awesome-list"],
+      "created_at": "2020-05-10T12:00:00Z",
+      "updated_at": "2024-01-15T08:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Search Code
+
+Search for code across GitHub repositories.
+
+```bash
+GET /api/search-code
+```
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search query using [GitHub code search syntax](https://docs.github.com/en/search-github/searching-on-github/searching-code)
+  
+  **Examples:**
+  - `addClass in:file language:js repo:jquery/jquery`
+  - `function path:app/public language:javascript`
+  - `import React extension:tsx`
+</ParamField>
+
+<ParamField query="language" type="string">
+  Filter by programming language
+  
+  This parameter is automatically added to the query as `language:{value}`
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="per_page" type="number" default="30">
+  Number of results per page (minimum: 1, maximum: 100)
+</ParamField>
+
+### Response
+
+<ResponseField name="total_count" type="number">
+  Total number of code matches
+</ResponseField>
+
+<ResponseField name="incomplete_results" type="boolean">
+  Whether the search results are incomplete
+</ResponseField>
+
+<ResponseField name="items" type="object[]">
+  Array of code match objects
+  
+  <Expandable title="Code Match Object">
+    <ResponseField name="name" type="string">
+      File name
+    </ResponseField>
+    
+    <ResponseField name="path" type="string">
+      Full file path
+    </ResponseField>
+    
+    <ResponseField name="sha" type="string">
+      Git SHA hash
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      API URL for the file
+    </ResponseField>
+    
+    <ResponseField name="html_url" type="string">
+      GitHub URL to view the file
+    </ResponseField>
+    
+    <ResponseField name="repository" type="object">
+      Repository information (name, full_name, owner, etc.)
+    </ResponseField>
+    
+    <ResponseField name="text_matches" type="object[]">
+      Highlighted text matches (when available)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/search-code?q=fetch+in:file&language=typescript"
+```
+
+```javascript fetch
+const response = await fetch('/api/search-code?q=useState&language=typescript');
+const data = await response.json();
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "total_count": 3421,
+  "incomplete_results": false,
+  "items": [
+    {
+      "name": "App.tsx",
+      "path": "src/components/App.tsx",
+      "sha": "abc123def456",
+      "url": "https://api.github.com/repositories/123456789/contents/src/components/App.tsx",
+      "html_url": "https://github.com/octocat/my-app/blob/main/src/components/App.tsx",
+      "repository": {
+        "id": 123456789,
+        "name": "my-app",
+        "full_name": "octocat/my-app",
+        "owner": {
+          "login": "octocat"
+        }
+      },
+      "text_matches": [
+        {
+          "fragment": "const [state, setState] = useState(0);",
+          "matches": [
+            {
+              "text": "useState",
+              "indices": [26, 34]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Search Users
+
+Search for users across GitHub.
+
+```bash
+GET /api/search-users
+```
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search query for GitHub usernames or user information
+  
+  **Examples:**
+  - `tom` - Users with "tom" in their username
+  - `fullname:tom` - Users with "tom" in their full name
+  - `location:san francisco` - Users in San Francisco
+</ParamField>
+
+<ParamField query="org" type="string">
+  Organization name to prioritize in search results
+  
+  When provided, the endpoint performs two searches:
+  1. Users in the specified organization matching the query
+  2. Global users matching the query
+  
+  Results are merged with org members appearing first.
+</ParamField>
+
+<ParamField query="per_page" type="number" default="30">
+  Number of results per page (minimum: 1, maximum: 100)
+</ParamField>
+
+### Response
+
+<ResponseField name="total_count" type="number">
+  Total number of users matching the search
+</ResponseField>
+
+<ResponseField name="items" type="object[]">
+  Array of user objects
+  
+  <Expandable title="User Object">
+    <ResponseField name="login" type="string">
+      Username
+    </ResponseField>
+    
+    <ResponseField name="id" type="number">
+      User ID
+    </ResponseField>
+    
+    <ResponseField name="avatar_url" type="string">
+      Avatar image URL
+    </ResponseField>
+    
+    <ResponseField name="html_url" type="string">
+      GitHub profile URL
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      User type ("User" or "Organization")
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/search-users?q=octocat"
+```
+
+```bash curl (with org)
+curl "https://yourdomain.com/api/search-users?q=john&org=github"
+```
+
+```javascript fetch
+const response = await fetch('/api/search-users?q=jane&per_page=10');
+const data = await response.json();
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "total_count": 42,
+  "items": [
+    {
+      "login": "octocat",
+      "id": 583231,
+      "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+      "html_url": "https://github.com/octocat",
+      "type": "User"
+    },
+    {
+      "login": "octocatdev",
+      "id": 1234567,
+      "avatar_url": "https://avatars.githubusercontent.com/u/1234567",
+      "html_url": "https://github.com/octocatdev",
+      "type": "User"
+    }
+  ]
+}
+```
+
+### Example Response (with org parameter)
+
+When the `org` parameter is provided, organization members appear first:
+
+```json
+{
+  "total_count": 15,
+  "items": [
+    {
+      "login": "john-from-github",
+      "id": 111111,
+      "avatar_url": "https://avatars.githubusercontent.com/u/111111",
+      "html_url": "https://github.com/john-from-github",
+      "type": "User"
+    },
+    {
+      "login": "john-public",
+      "id": 222222,
+      "avatar_url": "https://avatars.githubusercontent.com/u/222222",
+      "html_url": "https://github.com/john-public",
+      "type": "User"
+    }
+  ]
+}
+```
+
+## Common Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing query parameter"
+  }
+  ```
+  The `q` query parameter is required for all search endpoints.
+</Expandable>
+
+<Expandable title="401 Unauthorized">
+  ```json
+  {
+    "error": "Not authenticated"
+  }
+  ```
+  User is not authenticated. All search endpoints require authentication.
+</Expandable>
+
+## Rate Limiting
+
+All search endpoints are subject to GitHub API rate limits:
+
+- **Authenticated requests:** 5,000 requests per hour
+- **Search API specific:** 30 requests per minute
+
+The GitHub integration in `/lib/github.ts` includes comprehensive rate limit handling:
+
+- `GitHubRateLimitError` exception with `resetAt`, `limit`, and `used` properties
+- Automatic detection via HTTP 403/429 status codes
+- Rate limit headers parsed from `x-ratelimit-*` headers
+
+## Notes
+
+- All search endpoints require authentication via session cookies
+- Maximum 100 results per page across all endpoints
+- Page numbers start at 1 and are normalized (values < 1 become 1)
+- The `/api/search-code` endpoint includes text match highlighting via the `Accept: application/vnd.github.text-match+json` header
+- The `/api/search-users` endpoint supports organization-scoped search with fallback to global results
+- All timestamps are in ISO 8601 format (UTC)

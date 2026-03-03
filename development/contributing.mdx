@@ -1,0 +1,257 @@
+---
+title: Contributing Guidelines
+description: How to contribute to Better Hub - PR workflow, code style, and conventions
+icon: git-pull-request
+---
+
+Thank you for your interest in contributing to Better Hub! This guide covers everything you need to know about submitting contributions.
+
+## Pull Request Workflow
+
+<Steps>
+  <Step title="Fork and create a branch">
+    Fork the Better Hub repository and create a new branch from `main`:
+
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+
+    Use descriptive branch names that indicate what you're working on:
+    - `feature/add-pr-templates`
+    - `fix/issue-filter-bug`
+    - `refactor/auth-module`
+  </Step>
+
+  <Step title="Make your changes">
+    Implement your feature or fix. Keep your changes focused:
+
+    - One PR should address one issue or feature
+    - Break large changes into smaller, reviewable PRs
+    - Add tests if applicable
+    - Update documentation if you're changing behavior
+  </Step>
+
+  <Step title="Run quality checks">
+    Before committing, ensure your code passes all checks:
+
+    ```bash
+    pnpm check
+    ```
+
+    This runs:
+    - **oxlint** - Linting for code quality
+    - **oxfmt** - Code formatting validation
+    - **TypeScript** - Type checking
+
+    <Note>
+      The pre-commit hook automatically runs these checks, but it's faster to catch issues early.
+    </Note>
+  </Step>
+
+  <Step title="Commit your changes">
+    Commit with a clear, descriptive message following our conventions (see below):
+
+    ```bash
+    git add .
+    git commit -m "feat: add PR template support"
+    ```
+  </Step>
+
+  <Step title="Push and create a PR">
+    Push your branch to your fork:
+
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+
+    Then open a Pull Request against the `main` branch on the Better Hub repository.
+  </Step>
+
+  <Step title="Write a great PR description">
+    Fill out the PR description template:
+
+    - **What**: Summarize what changed
+    - **Why**: Explain the motivation or problem being solved
+    - **How**: Describe your approach if it's non-obvious
+    - **Screenshots**: Include before/after images for UI changes
+    - **Testing**: Describe how you tested the changes
+
+    <Accordion title="PR Description Example">
+      ```markdown
+      ## Summary
+      
+      Adds support for custom PR templates per repository.
+      
+      ## Motivation
+      
+      Users want to customize PR descriptions based on their team's workflow. This adds support for `.github/pull_request_template.md` files.
+      
+      ## Changes
+      
+      - Added template parser in `lib/github-utils.ts`
+      - Created new API endpoint `/api/pr-template`
+      - Updated PR creation UI to pre-fill template
+      
+      ## Testing
+      
+      - Tested with repos that have templates
+      - Tested with repos without templates (falls back gracefully)
+      - Verified markdown rendering works correctly
+      ```
+    </Accordion>
+  </Step>
+
+  <Step title="Respond to review feedback">
+    Maintainers will review your PR and may request changes:
+
+    - Address feedback promptly
+    - Push additional commits to the same branch
+    - Re-request review when ready
+    - Engage in discussion if you disagree with feedback
+  </Step>
+</Steps>
+
+## Code Style
+
+Better Hub uses automated tooling for code style - no manual decisions needed.
+
+### Linting
+
+We use **[oxlint](https://oxc-project.github.io/)**, a fast JavaScript/TypeScript linter:
+
+```bash
+pnpm lint         # Check for issues
+pnpm lint:fix     # Auto-fix issues
+```
+
+Configuration is in `oxlint.json` at the repo root.
+
+### Formatting
+
+We use **[oxfmt](https://oxc-project.github.io/)** for code formatting:
+
+```bash
+pnpm fmt          # Format all files
+pnpm fmt:check    # Check if files are formatted
+```
+
+Configuration is in `.oxfmtrc.json`. Files to ignore are in `.oxfmtignore`.
+
+<Note>
+  The pre-commit hook automatically formats staged files, so you don't need to manually run `pnpm fmt` before each commit.
+</Note>
+
+### Type Safety
+
+All code must pass TypeScript type checking:
+
+```bash
+pnpm typecheck
+```
+
+Avoid using `any` types. Use proper TypeScript types and interfaces.
+
+## Commit Conventions
+
+Use clear, descriptive commit messages with a conventional prefix:
+
+<CodeGroup>
+```bash Features
+feat: add webhook support for PR events
+feat: implement dark mode toggle
+```
+
+```bash Bug Fixes
+fix: resolve null pointer in issue filter
+fix: handle empty commit messages gracefully
+```
+
+```bash Refactoring
+refactor: extract auth helpers to shared module
+refactor: simplify GitHub API client initialization
+```
+
+```bash Documentation
+docs: update setup instructions for Windows
+docs: add API reference for webhooks
+```
+
+```bash Chores
+chore: upgrade dependencies
+chore: update Docker Compose config
+```
+
+```bash Tests
+test: add unit tests for markdown parser
+test: add e2e test for PR creation flow
+```
+</CodeGroup>
+
+### Commit Message Guidelines
+
+- **Use the imperative mood**: "add feature" not "added feature"
+- **Be concise**: Aim for 50 characters or less in the subject
+- **Explain why, not what**: The diff shows what changed; explain why
+- **Reference issues**: Include `Fixes #123` or `Closes #456` when applicable
+
+<Accordion title="Good vs Bad Commit Messages">
+  **Good:**
+  ```
+  feat: add PR review comment threading
+  
+  Allows users to reply to specific review comments, creating threaded
+  discussions similar to GitHub. Improves collaboration on code reviews.
+  
+  Fixes #234
+  ```
+
+  **Bad:**
+  ```
+  update files
+  ```
+
+  The good example:
+  - Uses a conventional prefix (`feat:`)
+  - Describes what was added
+  - Includes a body explaining why
+  - References the related issue
+</Accordion>
+
+## Testing Your Changes
+
+Before submitting a PR:
+
+1. **Manual testing**: Test your changes in the browser
+2. **Edge cases**: Try unusual inputs, empty states, error conditions
+3. **Cross-browser**: Test in Chrome, Firefox, and Safari if possible
+4. **Different screen sizes**: Ensure responsive design works
+
+<Note>
+  We don't currently have automated tests, but we encourage adding them for critical functionality.
+</Note>
+
+## Reporting Issues
+
+Found a bug or have a feature request?
+
+- Use [GitHub Issues](https://github.com/better-auth/better-hub/issues)
+- Search existing issues first to avoid duplicates
+- For bugs, include:
+  - Steps to reproduce
+  - Expected vs actual behavior
+  - Browser and OS information
+  - Screenshots or error messages
+
+## Security Vulnerabilities
+
+For security issues, **do not open public issues**. See [SECURITY.md](https://github.com/better-auth/better-hub/blob/main/SECURITY.md) for responsible disclosure procedures.
+
+## Questions?
+
+If you have questions about contributing:
+
+- Open a [discussion on GitHub](https://github.com/better-auth/better-hub/discussions)
+- Ask in the Better Auth Discord community
+- Comment on an existing issue or PR
+
+We're here to help and appreciate your contributions!

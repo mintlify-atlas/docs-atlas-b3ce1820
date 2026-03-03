@@ -1,0 +1,328 @@
+---
+title: Environment Variables
+description: Complete reference of all environment variables used in Better Hub
+---
+
+Better Hub uses environment variables to configure external services, authentication, and feature flags. Copy `.env.example` to `.env` and configure the required variables for your environment.
+
+## Quick Start
+
+```bash
+cp apps/web/.env.example apps/web/.env
+```
+
+Edit the `.env` file and configure at minimum the required variables marked below.
+
+---
+
+## Authentication
+
+Required for user authentication and session management.
+
+<ParamField path="GITHUB_CLIENT_ID" type="string" required>
+  GitHub OAuth App client ID. Create an OAuth app at [GitHub Settings > Developer Settings](https://github.com/settings/developers).
+</ParamField>
+
+<ParamField path="GITHUB_CLIENT_SECRET" type="string" required>
+  GitHub OAuth App client secret. Keep this value secure and never commit it to version control.
+</ParamField>
+
+<ParamField path="BETTER_AUTH_SECRET" type="string" required>
+  Random 32-character string used for session encryption. Generate with:
+  
+  ```bash
+  openssl rand -hex 16
+  ```
+  
+  This must be kept secret and should be unique per environment.
+</ParamField>
+
+<ParamField path="BETTER_AUTH_URL" type="string" required>
+  Base URL where the application is hosted. Used for OAuth callbacks.
+  
+  **Development:** `http://localhost:3000`
+  
+  **Production:** `https://yourdomain.com`
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_APP_URL" type="string" required>
+  Public-facing application URL. Must match `BETTER_AUTH_URL`.
+  
+  **Development:** `http://localhost:3000`
+  
+  **Production:** `https://yourdomain.com`
+</ParamField>
+
+---
+
+## Database
+
+PostgreSQL database connection.
+
+<ParamField path="DATABASE_URL" type="string" required>
+  PostgreSQL connection string in the format:
+  
+  ```
+  postgresql://[username]:[password]@[host]:[port]/[database]
+  ```
+  
+  **Docker Compose default:**
+  ```
+  postgresql://postgres:postgres@localhost:54320/better_hub
+  ```
+  
+  **Production:** Use your managed PostgreSQL instance connection string.
+</ParamField>
+
+<Warning>
+  Never commit database credentials to version control. Use environment-specific `.env` files that are git-ignored.
+</Warning>
+
+---
+
+## Redis
+
+Required for caching GitHub API responses and session data.
+
+<ParamField path="UPSTASH_REDIS_REST_URL" type="string" required>
+  Upstash Redis REST API URL. Get this from your [Upstash Console](https://console.upstash.com/).
+  
+  **Docker Compose default:**
+  ```
+  http://localhost:8079
+  ```
+  
+  **Production:** Use your Upstash Redis REST URL (format: `https://[endpoint].upstash.io`)
+</ParamField>
+
+<ParamField path="UPSTASH_REDIS_REST_TOKEN" type="string" required>
+  Upstash Redis REST API token. Get this from your Upstash Console.
+  
+  **Docker Compose default:**
+  ```
+  local_token
+  ```
+  
+  **Production:** Use your Upstash Redis token.
+</ParamField>
+
+---
+
+## AI Configuration
+
+Required for Ghost AI assistant and AI-powered features.
+
+### OpenRouter
+
+<ParamField path="OPEN_ROUTER_API_KEY" type="string" required>
+  OpenRouter API key for accessing multiple AI models. Get your API key at [OpenRouter](https://openrouter.ai/keys).
+  
+  This is the primary API key used for the Ghost AI assistant.
+</ParamField>
+
+<ParamField path="GHOST_MODEL" type="string" default="moonshotai/kimi-k2.5">
+  Model ID for the main Ghost AI assistant. Available models can be found at [OpenRouter Models](https://openrouter.ai/models).
+  
+  **Default:** `moonshotai/kimi-k2.5`
+  
+  **Recommended alternatives:**
+  - `anthropic/claude-4.5-sonnet`
+  - `google/gemini-2.5-pro`
+  - `openai/gpt-4o`
+</ParamField>
+
+<ParamField path="GHOST_MERGE_MODEL" type="string" default="google/gemini-2.5-pro-preview">
+  Model ID specifically for merge-related AI operations.
+  
+  **Default:** `google/gemini-2.5-pro-preview`
+</ParamField>
+
+### Anthropic
+
+<ParamField path="ANTHROPIC_API_KEY" type="string" required>
+  Anthropic API key for Claude models used in specific AI tasks. Get your API key at [Anthropic Console](https://console.anthropic.com/).
+</ParamField>
+
+### OpenAI
+
+<ParamField path="OPENAPI_KEY" type="string">
+  OpenAI API key for GPT models (optional). Only required if you want to use OpenAI models directly.
+</ParamField>
+
+---
+
+## Payments (Optional)
+
+Stripe integration for billing and subscriptions.
+
+<ParamField path="STRIPE_SECRET_KEY" type="string">
+  Stripe secret key from your [Stripe Dashboard](https://dashboard.stripe.com/apikeys).
+  
+  Use test keys (`sk_test_...`) for development and live keys (`sk_live_...`) for production.
+</ParamField>
+
+<ParamField path="STRIPE_WEBHOOK_SECRET" type="string">
+  Stripe webhook signing secret for verifying webhook events. Get this when setting up webhooks in your Stripe Dashboard.
+</ParamField>
+
+<ParamField path="STRIPE_BASE_PRICE_ID" type="string">
+  Stripe Price ID for the base subscription plan (format: `price_xxx`).
+</ParamField>
+
+<ParamField path="STRIPE_METERED_PRICE_ID" type="string">
+  Stripe Price ID for metered usage billing (format: `price_xxx`).
+</ParamField>
+
+---
+
+## Code Sandbox (Optional)
+
+E2B integration for sandboxed code execution.
+
+<ParamField path="E2B_API_KEY" type="string">
+  E2B API key for sandboxed code execution. Get your API key at [E2B](https://e2b.dev/).
+</ParamField>
+
+<ParamField path="E2B_TEMPLATE" type="string">
+  Custom E2B template ID. Falls back to default base image if not specified.
+  
+  Build a custom template with:
+  ```bash
+  cd apps/web && npx e2b template build
+  ```
+</ParamField>
+
+---
+
+## Background Jobs (Optional)
+
+Inngest for asynchronous task processing.
+
+<ParamField path="INNGEST_EVENT_KEY" type="string">
+  Inngest event key for triggering background jobs. Get this from your [Inngest Dashboard](https://app.inngest.com/).
+</ParamField>
+
+<ParamField path="INNGEST_SIGNING_KEY" type="string">
+  Inngest signing key for securing webhook events.
+</ParamField>
+
+---
+
+## Search & Memory (Optional)
+
+AI-powered search and conversation memory.
+
+<ParamField path="MIXEDBREAD_API_KEY" type="string">
+  Mixedbread embeddings API key for semantic search. Get your API key at [Mixedbread](https://www.mixedbread.ai/).
+</ParamField>
+
+<ParamField path="SUPER_MEMORY_API_KEY" type="string">
+  SuperMemory API key for AI conversation context and memory.
+</ParamField>
+
+---
+
+## Integrations (Optional)
+
+Third-party service integrations.
+
+### Slack
+
+<ParamField path="SLACK_CLIENT_ID" type="string">
+  Slack OAuth client ID for Slack notifications integration.
+</ParamField>
+
+<ParamField path="SLACK_CLIENT_SECRET" type="string">
+  Slack OAuth client secret.
+</ParamField>
+
+### Vercel
+
+<ParamField path="VERCEL_OIDC_TOKEN" type="string">
+  Vercel OIDC token for deployment authentication. Automatically set in Vercel deployments.
+</ParamField>
+
+---
+
+## Monitoring (Optional)
+
+Error tracking and monitoring.
+
+<ParamField path="SENTRY_DSN" type="string">
+  Sentry Data Source Name for error tracking. Format: `https://[key]@sentry.io/[project-id]`
+  
+  Get this from your [Sentry Project Settings](https://sentry.io/).
+</ParamField>
+
+<ParamField path="SENTRY_AUTH_TOKEN" type="string">
+  Sentry authentication token for source map uploads and releases.
+</ParamField>
+
+---
+
+## Environment-Specific Configuration
+
+### Development
+
+Minimal configuration for local development:
+
+```bash
+# Authentication
+GITHUB_CLIENT_ID=your_dev_client_id
+GITHUB_CLIENT_SECRET=your_dev_client_secret
+BETTER_AUTH_SECRET=$(openssl rand -hex 16)
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Database (Docker Compose)
+DATABASE_URL=postgresql://postgres:postgres@localhost:54320/better_hub
+
+# Redis (Docker Compose)
+UPSTASH_REDIS_REST_URL=http://localhost:8079
+UPSTASH_REDIS_REST_TOKEN=local_token
+
+# AI
+OPEN_ROUTER_API_KEY=your_openrouter_key
+ANTHROPIC_API_KEY=your_anthropic_key
+```
+
+### Production
+
+Production configuration checklist:
+
+<Steps>
+  <Step title="Generate secure secrets">
+    Use cryptographically secure random strings for `BETTER_AUTH_SECRET`
+  </Step>
+  
+  <Step title="Use managed services">
+    - PostgreSQL: Use managed database (Supabase, Neon, Railway)
+    - Redis: Use Upstash Redis
+  </Step>
+  
+  <Step title="Set production URLs">
+    Update `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to your production domain
+  </Step>
+  
+  <Step title="Enable monitoring">
+    Configure Sentry for error tracking
+  </Step>
+</Steps>
+
+<Warning>
+  Always use different OAuth apps and API keys for development and production environments.
+</Warning>
+
+---
+
+## Validation
+
+Better Hub will validate required environment variables on startup. If any required variables are missing, the application will fail to start with a descriptive error message.
+
+To check your configuration:
+
+```bash
+npm run build
+```
+
+Missing or invalid environment variables will be reported during the build process.
