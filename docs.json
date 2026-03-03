@@ -88,7 +88,8 @@
               "api/repos",
               "api/pull-requests",
               "api/issues",
-              "api/search"
+              "api/search",
+              "api/workflows"
             ]
           },
           {

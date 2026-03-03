@@ -1,0 +1,496 @@
+---
+title: "Workflow & CI/CD Endpoints"
+description: "API endpoints for GitHub Actions workflows and CI/CD operations"
+---
+
+## Get Workflow Runs
+
+Retrieves workflow runs for a repository or specific workflow.
+
+```bash
+GET /api/workflow-runs
+```
+
+### Query Parameters
+
+<ParamField query="owner" type="string" required>
+  The repository owner (user or organization)
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  The repository name
+</ParamField>
+
+<ParamField query="workflow_id" type="number">
+  Optional workflow ID to filter runs for a specific workflow
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination (minimum 1)
+</ParamField>
+
+<ParamField query="per_page" type="number" default="30">
+  Number of results per page (1-100)
+</ParamField>
+
+### Response
+
+<ResponseField name="total_count" type="number">
+  Total number of workflow runs
+</ResponseField>
+
+<ResponseField name="workflow_runs" type="array">
+  Array of workflow run objects
+  
+  <Expandable title="Workflow Run Object">
+    <ResponseField name="id" type="number">
+      Workflow run ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Workflow run name
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Run status: `queued`, `in_progress`, `completed`
+    </ResponseField>
+    
+    <ResponseField name="conclusion" type="string">
+      Run conclusion: `success`, `failure`, `cancelled`, `skipped`, `timed_out`, `action_required`
+    </ResponseField>
+    
+    <ResponseField name="html_url" type="string">
+      GitHub URL for the workflow run
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp when the run was created
+    </ResponseField>
+    
+    <ResponseField name="head_branch" type="string">
+      Branch name for the run
+    </ResponseField>
+    
+    <ResponseField name="head_sha" type="string">
+      Commit SHA that triggered the run
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl (all runs)
+curl "https://yourdomain.com/api/workflow-runs?owner=octocat&repo=Hello-World"
+```
+
+```bash curl (specific workflow)
+curl "https://yourdomain.com/api/workflow-runs?owner=octocat&repo=Hello-World&workflow_id=12345"
+```
+
+```javascript fetch
+const response = await fetch('/api/workflow-runs?owner=octocat&repo=Hello-World&page=1&per_page=30');
+const data = await response.json();
+console.log(`Total runs: ${data.total_count}`);
+```
+
+</CodeGroup>
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing owner or repo"
+  }
+  ```
+</Expandable>
+
+<Expandable title="401 Unauthorized">
+  ```json
+  {
+    "error": "Not authenticated"
+  }
+  ```
+</Expandable>
+
+---
+
+## Compare Workflow Runs
+
+Compare multiple workflow runs to analyze differences in execution time, status, and job results.
+
+```bash
+GET /api/compare-runs
+```
+
+### Query Parameters
+
+<ParamField query="owner" type="string" required>
+  The repository owner (user or organization)
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  The repository name
+</ParamField>
+
+<ParamField query="run_ids" type="array" required>
+  Array of workflow run IDs to compare (2-10 runs)
+</ParamField>
+
+### Response
+
+<ResponseField name="runs" type="array">
+  Array of run comparison objects
+  
+  <Expandable title="Run Comparison Object">
+    <ResponseField name="run" type="object">
+      Workflow run details (same structure as `/api/workflow-runs`)
+    </ResponseField>
+    
+    <ResponseField name="jobs" type="array">
+      Array of job objects for this run
+      
+      <Expandable title="Job Object">
+        <ResponseField name="id" type="number">
+          Job ID
+        </ResponseField>
+        
+        <ResponseField name="name" type="string">
+          Job name
+        </ResponseField>
+        
+        <ResponseField name="status" type="string">
+          Job status
+        </ResponseField>
+        
+        <ResponseField name="conclusion" type="string">
+          Job conclusion
+        </ResponseField>
+        
+        <ResponseField name="started_at" type="string">
+          ISO 8601 timestamp when job started
+        </ResponseField>
+        
+        <ResponseField name="completed_at" type="string">
+          ISO 8601 timestamp when job completed
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/compare-runs?owner=octocat&repo=Hello-World&run_ids=123&run_ids=456&run_ids=789"
+```
+
+```javascript fetch
+const params = new URLSearchParams();
+params.append('owner', 'octocat');
+params.append('repo', 'Hello-World');
+params.append('run_ids', '123');
+params.append('run_ids', '456');
+params.append('run_ids', '789');
+
+const response = await fetch(`/api/compare-runs?${params}`);
+const data = await response.json();
+```
+
+</CodeGroup>
+
+### Error Responses
+
+<Expandable title="400 Bad Request - Missing Parameters">
+  ```json
+  {
+    "error": "Missing owner or repo"
+  }
+  ```
+</Expandable>
+
+<Expandable title="400 Bad Request - Too Few Runs">
+  ```json
+  {
+    "error": "Need at least 2 run IDs"
+  }
+  ```
+</Expandable>
+
+<Expandable title="400 Bad Request - Too Many Runs">
+  ```json
+  {
+    "error": "Maximum 10 runs allowed"
+  }
+  ```
+</Expandable>
+
+---
+
+## Get Check Status
+
+Retrieves the check status for a specific Git reference (branch, tag, or commit SHA).
+
+```bash
+GET /api/check-status
+```
+
+### Query Parameters
+
+<ParamField query="owner" type="string" required>
+  The repository owner (user or organization)
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  The repository name
+</ParamField>
+
+<ParamField query="ref" type="string" required>
+  Git reference (branch name, tag, or commit SHA)
+</ParamField>
+
+### Response
+
+<ResponseField name="state" type="string">
+  Overall check state: `success`, `failure`, `pending`, `error`
+</ResponseField>
+
+<ResponseField name="statuses" type="array">
+  Array of individual check/status objects
+  
+  <Expandable title="Status Object">
+    <ResponseField name="context" type="string">
+      Check name or context
+    </ResponseField>
+    
+    <ResponseField name="state" type="string">
+      Check state
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Check description
+    </ResponseField>
+    
+    <ResponseField name="target_url" type="string">
+      URL to view detailed results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="check_runs" type="array">
+  Array of check run objects from GitHub Checks API
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/check-status?owner=octocat&repo=Hello-World&ref=main"
+```
+
+```javascript fetch
+const response = await fetch('/api/check-status?owner=octocat&repo=Hello-World&ref=feat/new-feature');
+const data = await response.json();
+
+if (data.state === 'success') {
+  console.log('All checks passed!');
+}
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "state": "success",
+  "statuses": [
+    {
+      "context": "continuous-integration/travis-ci",
+      "state": "success",
+      "description": "The Travis CI build passed",
+      "target_url": "https://travis-ci.org/octocat/Hello-World/builds/1"
+    }
+  ],
+  "check_runs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/octocat/Hello-World/runs/4"
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing owner, repo, or ref"
+  }
+  ```
+</Expandable>
+
+<Expandable title="500 Internal Server Error">
+  ```json
+  {
+    "error": "Failed to fetch check status"
+  }
+  ```
+</Expandable>
+
+---
+
+## Get Job Logs
+
+Retrieves parsed logs for a specific workflow job.
+
+```bash
+GET /api/job-logs
+```
+
+### Query Parameters
+
+<ParamField query="owner" type="string" required>
+  The repository owner (user or organization)
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  The repository name
+</ParamField>
+
+<ParamField query="job_id" type="string" required>
+  The workflow job ID
+</ParamField>
+
+### Response
+
+<ResponseField name="steps" type="array">
+  Array of log step objects
+  
+  <Expandable title="Step Object">
+    <ResponseField name="stepNumber" type="number">
+      Sequential step number
+    </ResponseField>
+    
+    <ResponseField name="stepName" type="string">
+      Name of the step
+    </ResponseField>
+    
+    <ResponseField name="lines" type="array">
+      Array of log line objects
+      
+      <Expandable title="Log Line Object">
+        <ResponseField name="timestamp" type="string">
+          ISO 8601 timestamp (null if not present)
+        </ResponseField>
+        
+        <ResponseField name="content" type="string">
+          Log line content
+        </ResponseField>
+        
+        <ResponseField name="annotation" type="string">
+          Annotation type: `error`, `warning`, `debug`, `notice`, or null
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/job-logs?owner=octocat&repo=Hello-World&job_id=12345"
+```
+
+```javascript fetch
+const response = await fetch('/api/job-logs?owner=octocat&repo=Hello-World&job_id=12345');
+const data = await response.json();
+
+data.steps.forEach(step => {
+  console.log(`Step ${step.stepNumber}: ${step.stepName}`);
+  console.log(`  ${step.lines.length} log lines`);
+});
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "steps": [
+    {
+      "stepNumber": 1,
+      "stepName": "Set up job",
+      "lines": [
+        {
+          "timestamp": "2024-01-15T10:30:00Z",
+          "content": "Current runner version: '2.311.0'",
+          "annotation": null
+        }
+      ]
+    },
+    {
+      "stepNumber": 2,
+      "stepName": "Run tests",
+      "lines": [
+        {
+          "timestamp": "2024-01-15T10:30:15Z",
+          "content": "Running test suite...",
+          "annotation": null
+        },
+        {
+          "timestamp": "2024-01-15T10:30:16Z",
+          "content": "Test failed: expected true, got false",
+          "annotation": "error"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing owner, repo, or job_id"
+  }
+  ```
+</Expandable>
+
+<Expandable title="404 Not Found">
+  ```json
+  {
+    "error": "Job not found"
+  }
+  ```
+</Expandable>
+
+<Expandable title="410 Gone">
+  ```json
+  {
+    "error": "Logs are no longer available"
+  }
+  ```
+  GitHub deletes workflow logs after 90 days.
+</Expandable>
+
+## Notes
+
+- All workflow endpoints require authentication via session cookies
+- Logs are parsed to extract step groups, timestamps, and GitHub annotations
+- The `/api/compare-runs` endpoint fetches up to 100 jobs per run
+- Check status combines data from both GitHub Status API and Checks API
+- Workflow run pagination supports 1-100 results per page

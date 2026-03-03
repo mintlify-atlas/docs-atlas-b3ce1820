@@ -265,9 +265,118 @@ const { repos } = await response.json();
 }
 ```
 
+---
+
+## Get File Content
+
+Retrieves the content of a specific file from a GitHub repository with optional syntax highlighting.
+
+```bash
+GET /api/file-content
+```
+
+### Query Parameters
+
+<ParamField query="owner" type="string" required>
+  The repository owner (user or organization)
+</ParamField>
+
+<ParamField query="repo" type="string" required>
+  The repository name
+</ParamField>
+
+<ParamField query="path" type="string" required>
+  The file path within the repository
+</ParamField>
+
+<ParamField query="ref" type="string">
+  The branch, tag, or commit SHA to read from. Defaults to the repository's default branch.
+</ParamField>
+
+<ParamField query="highlight" type="boolean">
+  Whether to include syntax highlighting tokens. Set to `true` to enable.
+</ParamField>
+
+### Response
+
+<ResponseField name="content" type="string">
+  The raw file content
+</ResponseField>
+
+<ResponseField name="sha" type="string">
+  The Git SHA of the file
+</ResponseField>
+
+<ResponseField name="tokens" type="array">
+  Syntax highlighting tokens (only included if `highlight=true`). Array of token objects for rendering highlighted code.
+</ResponseField>
+
+### Example Request
+
+<CodeGroup>
+
+```bash curl
+curl "https://yourdomain.com/api/file-content?owner=octocat&repo=Hello-World&path=README.md"
+```
+
+```bash curl (with highlighting)
+curl "https://yourdomain.com/api/file-content?owner=octocat&repo=Hello-World&path=src/index.ts&highlight=true"
+```
+
+```javascript fetch
+const response = await fetch('/api/file-content?owner=octocat&repo=Hello-World&path=README.md&highlight=true');
+const data = await response.json();
+console.log(data.content); // File content
+console.log(data.tokens);  // Syntax highlighting tokens
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "content": "# Hello World\n\nThis is a sample repository.",
+  "sha": "a1b2c3d4e5f6",
+  "tokens": [
+    {
+      "content": "#",
+      "style": { "color": "#6A9955" }
+    },
+    {
+      "content": " Hello World",
+      "style": { "color": "#6A9955" }
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  ```json
+  {
+    "error": "Missing required parameters: owner, repo, path"
+  }
+  ```
+  One or more required query parameters are missing.
+</Expandable>
+
+<Expandable title="404 Not Found">
+  ```json
+  {
+    "error": "File not found"
+  }
+  ```
+  The specified file does not exist in the repository.
+</Expandable>
+
 ## Notes
 
 - All repository endpoints leverage the GitHub API integration defined in `/lib/github.ts`
+- File content is decoded from base64 when retrieved from GitHub
+- Syntax highlighting uses Shiki with support for 100+ languages
+- The `path` parameter is automatically URL-decoded to handle special characters
 - Repositories are sorted by most recently pushed (for org repos) or most recently updated (for user repos)
 - The `/api/org-repos` endpoint fetches up to 100 repositories per request
 - The `/api/user-repos` endpoint fetches up to 100 repositories sorted by update time
